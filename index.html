@@ -287,6 +287,17 @@ table.xlm td.benar { color: #006100; }
 table.xlm thead tr:nth-child(1) th { box-shadow: inset 0 1px 0 #000; }
 table.xlm th.blue { overflow-wrap: normal; }
 
+/* Kartu Update Responden Masuk */
+.live-meta { display: flex; gap: 32px; flex-wrap: wrap; }
+.live-meta div { display: flex; flex-direction: column; gap: 2px; }
+.live-meta span { font-size: 13.5px; color: var(--muted); }
+.live-meta b { font-size: 17px; }
+table.t.live-t { font-size: 15px; }
+table.t.live-t th { font-size: 13.5px; }
+table.t.live-t td, table.t.live-t th { padding: 9px 12px; }
+table.t.live-t td.n { font-size: 16px; }
+table.t.live-t .bar { height: 10px; }
+
 </style>
 </head>
 <body>
@@ -1652,7 +1663,7 @@ window.OLAH_GAS = "/**\n * OlahSKM \u2014 Rekap Responden Masuk (Google Apps Scr
   function paintLive() { var box = $('#liveBody'); if (box) box.replaceWith(liveBody()); }
   function liveBody() {
     var key = periodKey(), c = state.live.cache[key], url = liveSrc().trim();
-    var A = analysis(), list = S.LAYANAN_TW[state.settings.tw];
+    var list = S.LAYANAN_TW[state.settings.tw];
     var wrap = el('div', { id: 'liveBody', style: 'display:flex;flex-direction:column;gap:12px' });
     if (!url) { wrap.appendChild(el('div', { class: 'callout warn', html: 'Sumber data untuk ' + esc(perLabel(state.settings.tw, state.settings.tahun)) + ' belum diatur. Buka <b>Atur sumber data</b> di bawah.' })); return wrap; }
     if (!c || c.total == null) {
@@ -1660,19 +1671,18 @@ window.OLAH_GAS = "/**\n * OlahSKM \u2014 Rekap Responden Masuk (Google Apps Scr
       return wrap;
     }
     var names = list.slice(); Object.keys(c.counts).forEach(function (k) { if (names.indexOf(k) < 0) names.push(k); });
-    var localBy = {}; A.perLayanan.forEach(function (b) { localBy[b.name] = b.n; });
     var max = Math.max.apply(null, names.map(function (n) { return c.counts[n] || 0; }).concat([1]));
+    // Waktu update di atas tabel
+    wrap.appendChild(el('div', { class: 'live-meta', html:
+      '<div><span>Respons terakhir masuk</span><b>' + esc(fmtWaktu(c.last)) + '</b></div>' +
+      '<div><span>Diperbarui</span><b>' + esc(fmtWaktu(c.fetchedAt)) + '</b></div>' }));
+    if (c.error) wrap.appendChild(el('div', { class: 'callout warn', html: 'Pembaruan terakhir gagal (' + esc(fmtWaktu(c.triedAt)) + '): ' + esc(c.error) + '. Angka di bawah adalah hasil pembaruan sebelumnya.' }));
     var rows = names.map(function (n) {
-      var v = c.counts[n] || 0, loc = localBy[n] || 0;
-      return '<tr><td>' + esc(n) + (list.indexOf(n) < 0 ? ' <span class="pill warn">di luar daftar</span>' : '') + '</td><td class="n"><b>' + v + '</b></td><td style="width:28%"><div class="bar"><i style="width:' + (v / max * 100).toFixed(1) + '%"></i></div></td>' +
-        '<td class="n">' + loc + (loc !== v ? ' <span class="pill warn" title="Selisih dengan data di menu File Responses">' + (v - loc > 0 ? '+' : '') + (v - loc) + '</span>' : '') + '</td></tr>';
+      var v = c.counts[n] || 0;
+      return '<tr><td>' + esc(n) + (list.indexOf(n) < 0 ? ' <span class="pill warn">di luar daftar</span>' : '') + '</td><td class="n"><b>' + v + '</b></td><td style="width:40%"><div class="bar"><i style="width:' + (v / max * 100).toFixed(1) + '%"></i></div></td></tr>';
     }).join('');
-    rows += '<tr class="tot"><td>Total responden</td><td class="n">' + c.total + '</td><td></td><td class="n">' + A.all.n + '</td></tr>';
-    wrap.appendChild(el('div', { class: 'tw', html: '<table class="t compact"><thead><tr><th>Jenis Layanan</th><th class="n">Responden masuk</th><th></th><th class="n" title="Jumlah baris yang sudah ditempel di menu File Responses">Sudah di aplikasi</th></tr></thead><tbody>' + rows + '</tbody></table>' }));
-    var meta = '<div><span class="hint">Respons terakhir masuk</span><br><b>' + esc(fmtWaktu(c.last)) + '</b></div><div><span class="hint">Diperbarui</span><br><b>' + esc(fmtWaktu(c.fetchedAt)) + '</b></div>';
-    wrap.appendChild(el('div', { class: 'twbox', style: 'gap:28px', html: meta }));
-    if (c.error) wrap.appendChild(el('div', { class: 'callout warn', html: 'Pembaruan terakhir gagal (' + esc(fmtWaktu(c.triedAt)) + '): ' + esc(c.error) + '. Angka di atas adalah hasil pembaruan sebelumnya.' }));
-    if (c.total !== A.all.n) wrap.appendChild(el('div', { class: 'hint', html: 'Jumlah di spreadsheet berbeda dengan data di aplikasi. Salin ulang jawaban terbaru ke menu <a href="#responses">File Responses</a> agar olah data dan laporan ikut terbarui.' }));
+    rows += '<tr class="tot"><td>Total responden</td><td class="n">' + c.total + '</td><td></td></tr>';
+    wrap.appendChild(el('div', { class: 'tw', html: '<table class="t live-t"><thead><tr><th>Jenis Layanan</th><th class="n">Jumlah Responden</th><th></th></tr></thead><tbody>' + rows + '</tbody></table>' }));
     return wrap;
   }
   function liveHelp(url) {
