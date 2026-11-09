@@ -21,6 +21,7 @@
   --r: 10px; --shadow: 0 1px 2px rgba(6, 50, 46, .06), 0 4px 16px rgba(6, 50, 46, .05);
 }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 html, body { height: 100%; }
 body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.5 var(--f-ui); }
 button, input, select, textarea { font: inherit; color: inherit; }
@@ -298,6 +299,22 @@ table.t.live-t td, table.t.live-t th { padding: 9px 12px; }
 table.t.live-t td.n { font-size: 16px; }
 table.t.live-t .bar { height: 10px; }
 
+/* Tabel & grafik untuk laporan (meniru tabel di Laporan SKM) */
+.rk-chart { overflow-x: auto; }
+.rk-img { display: block; width: 100%; max-width: 900px; height: auto; margin: 0 auto; }
+table.rpt { border-collapse: collapse; width: 100%; table-layout: fixed; font: 14px/1.35 Arial, "Helvetica Neue", sans-serif; color: #000; background: #fff; }
+table.rpt th, table.rpt td { border: 1px solid #000; padding: 7px 8px; vertical-align: middle; }
+table.rpt th { font-weight: 700; text-align: center; background: #fff; }
+table.rpt td.c { text-align: center; }
+table.rpt td[rowspan] { vertical-align: top; }
+table.rpt-ikm { min-width: 920px; }
+table.rpt-ikm th { background: #e2efda; font-weight: 400; }
+table.rpt-ikm th.vth { height: 112px; padding: 6px 2px; }
+table.rpt-ikm .vt { writing-mode: vertical-rl; white-space: nowrap; display: inline-block; }
+table.rpt-resp { max-width: 720px; }
+table.rpt-lay { max-width: 720px; }
+table.rpt-lay th { background: #d9d9d9; font-weight: 400; }
+
 </style>
 </head>
 <body>
@@ -307,6 +324,7 @@ table.t.live-t .bar { height: 10px; }
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
 <script>
 /* ====================================================================
    OlahSKM — mesin hitung SKM (PermenPANRB No. 14 Tahun 2017)
@@ -1347,7 +1365,7 @@ window.OLAH_GAS = "/**\n * OlahSKM \u2014 Rekap Responden Masuk (Google Apps Scr
     plus: '<path d="M12 5v14M5 12h14"/>', trash: '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 14h10l1-14M9 7V4h6v3"/>',
     undo: '<path d="M9 14L4 9l5-5M4 9h11a5 5 0 010 10h-3"/>', file: '<path d="M6 2h9l5 5v15H6zM14 2v6h6"/>',
     doc: '<path d="M6 2h9l5 5v15H6zM14 2v6h6M9 13l1.5 5L12 14l1.5 4L15 13"/>', img: '<path d="M3 5h18v14H3zM3 16l5-5 4 4 3-3 6 6M15 9h.01"/>',
-    chev: '<path d="M9 6l6 6-6 6"/>', spark: '<path d="M12 3l2 5 5 2-5 2-2 5-2-5-5-2 5-2z"/>', save: '<path d="M5 3h11l3 3v15H5zM8 3v5h7M8 21v-7h8v7"/>'
+    chev: '<path d="M9 6l6 6-6 6"/>', chart: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>', spark: '<path d="M12 3l2 5 5 2-5 2-2 5-2-5-5-2 5-2z"/>', save: '<path d="M5 3h11l3 3v15H5zM8 3v5h7M8 21v-7h8v7"/>'
   };
   function ic(n) { return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICON[n] + '</svg>'; }
 
@@ -1422,6 +1440,7 @@ window.OLAH_GAS = "/**\n * OlahSKM \u2014 Rekap Responden Masuk (Google Apps Scr
   function setSaveUI(t, busyFlag) { var s = $('#saveState'); if (s) s.innerHTML = '<span class="dot' + (busyFlag ? ' busy' : '') + '"></span>' + esc(t); }
   function changed(kind) {
     if (kind !== 'text') dirtyA = true;
+    if (view === 'laporan') { clearTimeout(changed._t); changed._t = setTimeout(function () { try { refreshAside(); } catch (e) {} }, 300); }
     setSaveUI('Menyimpan…', true);
     clearTimeout(saveT);
     saveT = setTimeout(function () {
@@ -1905,6 +1924,248 @@ window.OLAH_GAS = "/**\n * OlahSKM \u2014 Rekap Responden Masuk (Google Apps Scr
       '<tr class="b"><td class="lbl">Mutu Layanan</td><td colspan="16">' + (b.mutu || '–') + '</td></tr>';
     return '<table class="xl">' + cg + '<thead>' + h0 + h1 + h2 + '</thead><tbody>' + rows + '</tbody></table>';
   }
+  /* ================================================================
+     REKAP TABEL & GRAFIK LAPORAN (menu Pengolahan Data)
+     Grafik digambar langsung di canvas agar sama persis di layar,
+     unduhan PNG/JPG, dan gambar di Laporan SKM.
+     ================================================================ */
+  function hiCanvas(w, h, scale, draw) {
+    var cv = document.createElement('canvas'); cv.width = Math.round(w * scale); cv.height = Math.round(h * scale);
+    var x = cv.getContext('2d'); x.scale(scale, scale); draw(x, w, h); return cv;
+  }
+  function drawUnsurChart(x, W, H, unsurK) {
+    x.fillStyle = '#fff'; x.fillRect(0, 0, W, H);
+    var top = 14, base = H - 26, left = 12, right = W - 12, plotH = base - top - 8;
+    var g = x.createLinearGradient(0, base - plotH * 0.55, 0, base);
+    g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(1, 'rgba(222,222,222,1)');
+    x.fillStyle = g; x.fillRect(left, base - plotH * 0.55, right - left, plotH * 0.55);
+    var vals = unsurK.map(function (v) { return v == null || isNaN(v) ? null : v; });
+    var nn = vals.filter(function (v) { return v != null; });
+    if (!nn.length) { x.fillStyle = '#777'; x.font = '14px Arial'; x.textAlign = 'center'; x.fillText('Belum ada data', W / 2, H / 2); return; }
+    var mn = Math.floor(Math.min.apply(null, nn)) - 1, mx = Math.max.apply(null, nn); mx = mx + (mx - mn) * 0.05; if (mx - mn < 2) mx = mn + 2;
+    var slot = (right - left) / 9, bw = slot * 0.72;
+    var pos = vals.map(function (v, i) { var bx = left + slot * i + (slot - bw) / 2, h = v == null ? 0 : (v - mn) / (mx - mn) * plotH; return { x: bx, y: base - h, h: h, v: v }; });
+    // bayangan miring di belakang batang
+    pos.forEach(function (p) {
+      if (!p.h) return; var sh = Math.min(p.h * 0.32, 70), sk = sh * 1.25;
+      var sg = x.createLinearGradient(0, base, 0, base - sh); sg.addColorStop(0, 'rgba(0,0,0,0.22)'); sg.addColorStop(1, 'rgba(0,0,0,0)');
+      x.fillStyle = sg; x.beginPath(); x.moveTo(p.x, base); x.lineTo(p.x + bw, base); x.lineTo(p.x + bw + sk, base - sh); x.lineTo(p.x + sk, base - sh); x.closePath(); x.fill();
+    });
+    pos.forEach(function (p) {
+      if (!p.h) return;
+      var bg = x.createLinearGradient(0, p.y, 0, base); bg.addColorStop(0, '#f0473c'); bg.addColorStop(1, '#d9271f');
+      x.fillStyle = bg; x.fillRect(p.x, p.y, bw, p.h);
+      var hg = x.createLinearGradient(p.x, 0, p.x + bw, 0); hg.addColorStop(0, 'rgba(255,255,255,0.10)'); hg.addColorStop(0.5, 'rgba(255,255,255,0)'); hg.addColorStop(1, 'rgba(0,0,0,0.06)');
+      x.fillStyle = hg; x.fillRect(p.x, p.y, bw, p.h);
+      x.fillStyle = '#fff'; x.font = 'bold 17px Arial'; x.textAlign = 'center'; x.textBaseline = 'top';
+      x.fillText(p.v.toFixed(2), p.x + bw / 2, p.y + 7);
+    });
+    x.fillStyle = '#404040'; x.font = '9.5px Arial'; x.textAlign = 'center'; x.textBaseline = 'top';
+    S.UNSUR.forEach(function (u, i) { x.fillText('(' + u.k + ') ' + u.short, left + slot * i + slot / 2, base + 8); });
+    x.strokeStyle = '#d9d9d9'; x.lineWidth = 1; x.strokeRect(0.5, 0.5, W - 1, H - 1);
+  }
+  function niceStep(range) {
+    var c = [0.05, 0.1, 0.2, 0.25, 0.5, 1, 2, 2.5, 5, 10];
+    for (var i = 0; i < c.length; i++) if (range / c[i] <= 7) return c[i];
+    return 20;
+  }
+  function trenTitle(series, tahun) {
+    var pts = series.filter(function (p) { return p.v != null; });
+    if (!pts.length) return 'Tahun ' + tahun;
+    return pts.length === 1 ? pts[0].label + ' Tahun ' + tahun : pts[0].label + ' s.d. ' + pts[pts.length - 1].label + ' Tahun ' + tahun;
+  }
+  function drawTrenChart(x, W, H, series, tahun) {
+    x.fillStyle = '#fff'; x.fillRect(0, 0, W, H);
+    x.fillStyle = '#595959'; x.textAlign = 'center'; x.textBaseline = 'alphabetic'; x.font = '22px Arial';
+    x.fillText('Nilai SKM KPU Kabupaten Pacitan', W / 2, 34); x.fillText(trenTitle(series, tahun), W / 2, 62);
+    var left = 62, right = W - 36, top = 84, base = H - 52;
+    var pg = x.createLinearGradient(0, top, 0, base); pg.addColorStop(0, '#ffffff'); pg.addColorStop(1, '#ebebeb');
+    x.fillStyle = pg; x.fillRect(left, top, right - left, base - top);
+    var nn = series.map(function (p) { return p.v; }).filter(function (v) { return v != null && !isNaN(v); });
+    var lo, hi, st;
+    if (nn.length) {
+      lo = Math.min.apply(null, nn); hi = Math.max.apply(null, nn); if (hi - lo < 0.3) { var m = (hi + lo) / 2; lo = m - 0.15; hi = m + 0.15; }
+      st = niceStep(hi - lo); lo = Math.floor(lo / st + 1e-9) * st; hi = Math.ceil(hi / st - 1e-9) * st; if (hi === lo) hi = lo + st;
+    } else { lo = 80; hi = 100; st = 5; }
+    var dec = st >= 1 ? 0 : (st >= 0.1 && Math.abs(st * 10 - Math.round(st * 10)) < 1e-9 ? 1 : 2);
+    var Y = function (v) { return base - (v - lo) / (hi - lo) * (base - top); };
+    x.font = '14px Arial'; x.fillStyle = '#595959'; x.textAlign = 'right'; x.textBaseline = 'middle';
+    for (var t = lo; t <= hi + 1e-9; t += st) x.fillText(String(+t.toFixed(dec)), left - 10, Y(t));
+    x.strokeStyle = '#bfbfbf'; x.lineWidth = 1; x.beginPath(); x.moveTo(left, base + 0.5); x.lineTo(right, base + 0.5); x.stroke();
+    var n = series.length, slot = (right - left) / Math.max(n, 1);
+    var pts = series.map(function (p, i) { return { x: left + slot * i + slot / 2, y: p.v == null ? null : Y(p.v), v: p.v, label: p.label }; });
+    x.textAlign = 'center'; x.textBaseline = 'top'; x.fillStyle = '#595959'; x.font = '14px Arial';
+    pts.forEach(function (p) { x.fillText(p.label, p.x, base + 12); });
+    var valid = pts.filter(function (p) { return p.y != null; });
+    if (valid.length) {
+      var lp = valid[valid.length - 1];
+      x.strokeStyle = '#d0d0d0'; x.beginPath(); x.moveTo(lp.x + 0.5, lp.y); x.lineTo(lp.x + 0.5, base); x.stroke();
+      x.strokeStyle = '#4285f4'; x.lineWidth = 3; x.lineJoin = 'round'; x.beginPath();
+      valid.forEach(function (p, i) { if (i) x.lineTo(p.x, p.y); else x.moveTo(p.x, p.y); }); x.stroke();
+      if (valid.length === 1) { x.fillStyle = '#4285f4'; x.beginPath(); x.arc(lp.x, lp.y, 4, 0, Math.PI * 2); x.fill(); }
+      x.fillStyle = '#404040'; x.font = '14px Arial'; x.textBaseline = 'middle';
+      valid.forEach(function (p, i) {
+        var pv = valid[i - 1], nx = valid[i + 1], ly = Math.min(p.y + 18, base - 9);
+        // geser label menjauhi garis yang masuk/keluar dari bawah titik
+        if (pv && pv.y > p.y + 4) { x.textAlign = 'left'; x.fillText(p.v.toFixed(2), p.x + 8, ly); }
+        else if (nx && nx.y > p.y + 4) { x.textAlign = 'right'; x.fillText(p.v.toFixed(2), p.x - 8, ly); }
+        else { x.textAlign = 'center'; x.fillText(p.v.toFixed(2), p.x, ly); }
+      });
+    }
+    x.strokeStyle = '#d9d9d9'; x.lineWidth = 1; x.strokeRect(0.5, 0.5, W - 1, H - 1);
+  }
+  function unsurChartCanvas(A, scale) { return hiCanvas(760, 415, scale || 2, function (x, w, h) { drawUnsurChart(x, w, h, A.all.unsurK); }); }
+  function trenChartCanvas(scale) { var th = state.settings.tahun; return hiCanvas(750, 350, scale || 2, function (x, w, h) { drawTrenChart(x, w, h, trenSeries(th), th); }); }
+  function saveCanvas(cv, name, type) {
+    var mime = type === 'jpg' ? 'image/jpeg' : 'image/png';
+    cv.toBlob(function (b) { if (b) { download(b, name + '.' + type); toast('Gambar diunduh: ' + name + '.' + type); } else toast('Gagal membuat gambar.'); }, mime, 0.95);
+  }
+
+  function rekapLayanan(A) { return A.perLayanan.filter(function (b) { return b.inList || b.n > 0; }); }
+  function karakteristik(A) {
+    return [['Jenis Kelamin', A.pivots.jk], ['Pendidikan', A.pivots.pendidikan], ['Pekerjaan', A.pivots.pekerjaan], ['Kategorisasi Pengguna Layanan', A.pivots.disab], ['Kategorisasi Jenis Disabilitas', A.pivots.jenisDisab]]
+      .filter(function (k) { return k[1].rows.length; });
+  }
+  function rkIkmHTML(A) {
+    var lay = rekapLayanan(A), a = A.all, d = function (v) { return v == null || isNaN(v) ? '–' : f2(v); };
+    var h = '<tr><th>No.</th><th>Jenis Layanan</th><th>Jumlah Responden</th>' + S.UNSUR.map(function (u) { return '<th class="vth"><span class="vt">' + esc(u.short) + '</span></th>'; }).join('') + '<th>IKM Per Jenis Layanan</th></tr>';
+    var b = lay.map(function (l, i) {
+      return '<tr><td class="c">' + (i + 1) + '.</td><td>' + esc(l.name) + '</td><td class="c">' + l.n + '</td>' + l.unsurK.map(function (v) { return '<td class="c">' + d(v) + '</td>'; }).join('') + '<td class="c"><b>' + d(l.ikm) + '</b></td></tr>';
+    }).join('');
+    b += '<tr><td colspan="3">Rerata IKM Per Unsur</td>' + a.unsurK.map(function (v) { return '<td class="c"><b>' + d(v) + '</b></td>'; }).join('') + '<td class="c"><b>' + d(a.ikm) + '</b></td></tr>';
+    b += '<tr><td colspan="3">IKM Unit Layanan</td><td class="c" colspan="10"><b>' + d(a.ikm) + '</b></td></tr>';
+    b += '<tr><td colspan="3">Mutu Unit Layanan</td><td class="c" colspan="10"><b>' + (a.mutu || '–') + '</b></td></tr>';
+    return '<table class="rpt rpt-ikm"><colgroup><col style="width:46px"><col style="width:220px"><col style="width:110px">' + S.UNSUR.map(function () { return '<col>'; }).join('') + '<col style="width:96px"></colgroup><thead>' + h + '</thead><tbody>' + b + '</tbody></table>';
+  }
+  function rkRespHTML(A) {
+    var b = '';
+    karakteristik(A).forEach(function (k, i) {
+      k[1].rows.forEach(function (r, j) {
+        b += '<tr>' + (j === 0 ? '<td class="c" rowspan="' + k[1].rows.length + '">' + (i + 1) + '</td><td rowspan="' + k[1].rows.length + '">' + esc(k[0]) + '</td>' : '') +
+          '<td>' + esc(r.label) + '</td><td class="c">' + r.n + '</td><td class="c">' + S.pct(r.pct) + '</td></tr>';
+      });
+    });
+    return '<table class="rpt rpt-resp"><colgroup><col style="width:46px"><col style="width:150px"><col><col style="width:100px"><col style="width:110px"></colgroup><thead><tr><th>No</th><th>Karakteristik</th><th>Indikator</th><th>Jumlah</th><th>Presentase</th></tr></thead><tbody>' + b + '</tbody></table>';
+  }
+  function rkLayHTML(A) {
+    var lay = rekapLayanan(A), n = A.all.n;
+    var b = lay.map(function (l, i) { return '<tr><td class="c">' + (i + 1) + '.</td><td>' + esc(l.name) + '</td><td class="c">' + l.n + '</td><td class="c">' + S.pct(n ? l.n / n : 0) + '</td></tr>'; }).join('');
+    b += '<tr class="sum"><td></td><td><b>Jumlah</b></td><td class="c"><b>' + n + '</b></td><td class="c"><b>' + (n ? '100.00%' : '–') + '</b></td></tr>';
+    return '<table class="rpt rpt-lay"><colgroup><col style="width:56px"><col><col style="width:110px"><col style="width:130px"></colgroup><thead><tr><th>No.</th><th>Jenis Layanan Publik KPU</th><th>Jumlah</th><th>Presentase</th></tr></thead><tbody>' + b + '</tbody></table>';
+  }
+
+  /* Excel bergaya (ExcelJS): 3 tabel dalam 1 berkas + lembar grafik */
+  function exportRekapXlsx() {
+    if (typeof ExcelJS === 'undefined') return toast('Pustaka Excel belum termuat. Periksa koneksi internet lalu muat ulang halaman.', 5000);
+    var A = analysis(), a = A.all, per = perLabel(state.settings.tw, state.settings.tahun);
+    busy(true, 'Menyusun berkas Excel…');
+    try {
+      var wb = new ExcelJS.Workbook(); wb.creator = 'OlahSKM KPU Kabupaten Pacitan'; wb.created = new Date();
+      var thin = { style: 'thin', color: { argb: 'FF000000' } }, BORDER = { top: thin, left: thin, bottom: thin, right: thin };
+      var font = { name: 'Arial', size: 11 };
+      var fill = function (hex) { return { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF' + hex } }; };
+      function style(ws, r1, c1, r2, c2, o) {
+        for (var r = r1; r <= r2; r++) for (var c = c1; c <= c2; c++) {
+          var cell = ws.getCell(r, c); cell.border = BORDER; cell.font = Object.assign({}, font, o && o.font);
+          cell.alignment = Object.assign({ vertical: 'middle', wrapText: true }, o && o.align);
+          if (o && o.fill) cell.fill = fill(o.fill);
+        }
+      }
+      function title(ws, text, cols) { ws.mergeCells(1, 1, 1, cols); var c = ws.getCell(1, 1); c.value = text; c.font = { name: 'Arial', size: 12, bold: true }; c.alignment = { horizontal: 'center' }; ws.getRow(1).height = 20; }
+
+      // Lembar 1 — IKM per jenis layanan
+      var w1 = wb.addWorksheet('IKM Per Jenis Layanan', { pageSetup: { orientation: 'landscape', paperSize: 9, fitToPage: true, fitToWidth: 1, fitToHeight: 0 } });
+      title(w1, 'Indeks Kepuasan Masyarakat Per Jenis Layanan — ' + per, 13);
+      w1.columns = [{ width: 6 }, { width: 34 }, { width: 12 }].concat(S.UNSUR.map(function () { return { width: 8 }; })).concat([{ width: 12 }]);
+      var hr = 3; w1.getRow(hr).values = ['No.', 'Jenis Layanan', 'Jumlah Responden'].concat(S.UNSUR.map(function (u) { return u.short; })).concat(['IKM Per Jenis Layanan']);
+      w1.getRow(hr).height = 92;
+      style(w1, hr, 1, hr, 13, { fill: 'E2EFDA', align: { horizontal: 'center' } });
+      for (var c = 4; c <= 12; c++) w1.getCell(hr, c).alignment = { horizontal: 'center', vertical: 'middle', textRotation: -90 };
+      var r = hr + 1, num = function (v) { return v == null || isNaN(v) ? '–' : +v.toFixed(2); };
+      rekapLayanan(A).forEach(function (l, i) {
+        w1.getRow(r).values = [(i + 1) + '.', l.name, l.n].concat(l.unsurK.map(num)).concat([num(l.ikm)]);
+        style(w1, r, 1, r, 13, { align: { horizontal: 'center' } }); w1.getCell(r, 2).alignment = { vertical: 'middle', wrapText: true };
+        w1.getCell(r, 13).font = Object.assign({}, font, { bold: true }); r++;
+      });
+      w1.getRow(r).values = ['Rerata IKM Per Unsur', '', ''].concat(a.unsurK.map(num)).concat([num(a.ikm)]);
+      w1.mergeCells(r, 1, r, 3); style(w1, r, 1, r, 13, { font: { bold: true }, align: { horizontal: 'center' } }); w1.getCell(r, 1).font = font; w1.getCell(r, 1).alignment = { vertical: 'middle' }; r++;
+      [['IKM Unit Layanan', num(a.ikm)], ['Mutu Unit Layanan', a.mutu || '–']].forEach(function (x) {
+        w1.getCell(r, 1).value = x[0]; w1.getCell(r, 4).value = x[1]; w1.mergeCells(r, 1, r, 3); w1.mergeCells(r, 4, r, 13);
+        style(w1, r, 1, r, 13, { font: { bold: true }, align: { horizontal: 'center' } }); w1.getCell(r, 1).font = font; w1.getCell(r, 1).alignment = { vertical: 'middle' }; r++;
+      });
+      for (var rr = hr + 1; rr < r; rr++) for (var cc = 4; cc <= 13; cc++) if (typeof w1.getCell(rr, cc).value === 'number') w1.getCell(rr, cc).numFmt = '0.00';
+
+      // Lembar 2 — Database responden
+      var w2 = wb.addWorksheet('Database Responden', { pageSetup: { paperSize: 9, fitToPage: true, fitToWidth: 1, fitToHeight: 0 } });
+      title(w2, 'Database Responden Berdasarkan Indikator — ' + per, 5);
+      w2.columns = [{ width: 6 }, { width: 20 }, { width: 30 }, { width: 11 }, { width: 13 }];
+      w2.getRow(3).values = ['No', 'Karakteristik', 'Indikator', 'Jumlah', 'Presentase'];
+      style(w2, 3, 1, 3, 5, { font: { bold: true }, align: { horizontal: 'center' } });
+      r = 4;
+      karakteristik(A).forEach(function (k, i) {
+        var r0 = r;
+        k[1].rows.forEach(function (x) { w2.getRow(r).values = ['', '', x.label, x.n, x.pct]; r++; });
+        w2.getCell(r0, 1).value = i + 1; w2.getCell(r0, 2).value = k[0];
+        if (r - 1 > r0) { w2.mergeCells(r0, 1, r - 1, 1); w2.mergeCells(r0, 2, r - 1, 2); }
+        style(w2, r0, 1, r - 1, 5, {});
+        for (var q = r0; q < r; q++) { w2.getCell(q, 1).alignment = { horizontal: 'center', vertical: 'top' }; w2.getCell(q, 2).alignment = { vertical: 'top', wrapText: true }; w2.getCell(q, 4).alignment = { horizontal: 'center', vertical: 'middle' }; w2.getCell(q, 5).alignment = { horizontal: 'center', vertical: 'middle' }; w2.getCell(q, 5).numFmt = '0.00%'; }
+      });
+
+      // Lembar 3 — Jenis layanan publik
+      var w3 = wb.addWorksheet('Jenis Layanan Publik KPU', { pageSetup: { paperSize: 9, fitToPage: true, fitToWidth: 1, fitToHeight: 0 } });
+      title(w3, 'Jenis Layanan Publik KPU — ' + per, 4);
+      w3.columns = [{ width: 7 }, { width: 46 }, { width: 12 }, { width: 14 }];
+      w3.getRow(3).values = ['No.', 'Jenis Layanan Publik KPU', 'Jumlah', 'Presentase'];
+      style(w3, 3, 1, 3, 4, { fill: 'D9D9D9', align: { horizontal: 'center' } });
+      r = 4;
+      rekapLayanan(A).forEach(function (l, i) {
+        w3.getRow(r).values = [(i + 1) + '.', l.name, l.n, a.n ? l.n / a.n : 0];
+        style(w3, r, 1, r, 4, { align: { horizontal: 'center' } }); w3.getCell(r, 2).alignment = { vertical: 'middle', wrapText: true }; w3.getCell(r, 4).numFmt = '0.00%'; w3.getRow(r).height = 22; r++;
+      });
+      w3.getRow(r).values = ['', 'Jumlah', a.n, a.n ? 1 : 0];
+      style(w3, r, 1, r, 4, { font: { bold: true }, align: { horizontal: 'center' } }); w3.getCell(r, 2).alignment = { vertical: 'middle' }; w3.getCell(r, 4).numFmt = '0.00%';
+
+      // Lembar 4 — Grafik
+      var w4 = wb.addWorksheet('Grafik');
+      w4.getCell('A1').value = 'Analisis Capaian Nilai Berdasarkan Unsur Pelayanan'; w4.getCell('A1').font = { name: 'Arial', size: 12, bold: true };
+      var i1 = wb.addImage({ base64: unsurChartCanvas(A, 2).toDataURL('image/png'), extension: 'png' });
+      w4.addImage(i1, { tl: { col: 0, row: 1.2 }, ext: { width: 760, height: 415 } });
+      w4.getCell('A25').value = 'Tren Nilai SKM ' + state.settings.tahun; w4.getCell('A25').font = { name: 'Arial', size: 12, bold: true };
+      var i2 = wb.addImage({ base64: trenChartCanvas(2).toDataURL('image/png'), extension: 'png' });
+      w4.addImage(i2, { tl: { col: 0, row: 25.2 }, ext: { width: 750, height: 350 } });
+
+      wb.xlsx.writeBuffer().then(function (buf) {
+        var name = 'Rekap Tabel SKM TW ' + S.ROMAWI[state.settings.tw] + ' ' + state.settings.tahun + ' - KPU Kab Pacitan.xlsx';
+        download(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), name);
+        busy(false); toast('Excel diunduh: ' + name, 4500);
+      }).catch(function (e) { busy(false); toast('Gagal membuat Excel: ' + e.message, 5000); });
+    } catch (e) { busy(false); console.error(e); toast('Gagal membuat Excel: ' + e.message, 5000); }
+  }
+
+  function rekapSection(A) {
+    var sec = el('section', { class: 'olah-sec', id: 'rekapLaporan' }, [el('h2', { class: 'sec-h', html: 'Tabel dan Grafik untuk Laporan <small>' + esc(perLabel(state.settings.tw, state.settings.tahun)) + ' · grafik diunduh sebagai PNG/JPG, ketiga tabel diunduh bersama dalam satu berkas Excel</small>' })]);
+    function chartCard(ttl, sub, mk, fname) {
+      var cv = mk(), img = el('img', { src: cv.toDataURL('image/png'), alt: ttl, class: 'rk-img' });
+      return el('div', { class: 'card' }, [
+        el('div', { class: 'card-h' }, [el('h2', { text: ttl }), sub ? el('span', { class: 'hint', text: sub }) : null, el('span', { class: 'spacer' }),
+          el('button', { class: 'btn sm', html: ic('dl') + 'PNG', onclick: function () { saveCanvas(mk(), fname, 'png'); } }),
+          el('button', { class: 'btn sm', html: ic('dl') + 'JPG', onclick: function () { saveCanvas(mk(), fname, 'jpg'); } })]),
+        el('div', { class: 'rk-chart' }, [img])]);
+    }
+    function tableCard(ttl, sub, html) {
+      return el('div', { class: 'card' }, [
+        el('div', { class: 'card-h' }, [el('h2', { text: ttl }), sub ? el('span', { class: 'hint', text: sub }) : null, el('span', { class: 'spacer' }),
+          el('button', { class: 'btn sm', html: ic('dl') + 'Excel (3 tabel)', onclick: exportRekapXlsx })]),
+        el('div', { class: 'xl-wrap', html: html })]);
+    }
+    var tw = S.ROMAWI[state.settings.tw], th = state.settings.tahun;
+    sec.appendChild(chartCard('Analisis Capaian Nilai Berdasarkan Unsur Pelayanan', 'nilai konversi per unsur, seluruh jenis layanan', function () { return unsurChartCanvas(A, 2); }, 'Grafik Nilai Unsur SKM TW ' + tw + ' ' + th));
+    sec.appendChild(chartCard('Tren Nilai SKM ' + th, 'IKM konversi per triwulan dari Rekap per Triwulan', function () { return trenChartCanvas(2); }, 'Tren Nilai SKM ' + th));
+    sec.appendChild(tableCard('Indeks Kepuasan Masyarakat Per Jenis Layanan', 'nilai konversi', rkIkmHTML(A)));
+    sec.appendChild(tableCard('Database Responden Berdasarkan Indikator', '', rkRespHTML(A)));
+    sec.appendChild(tableCard('Jenis Layanan Publik KPU', '', rkLayHTML(A)));
+    return sec;
+  }
   function olahStatus(b) {
     if (!b.n) return '<span class="pill">0 responden</span>';
     return (b.invalid ? '<span class="pill bad">' + b.invalid + ' baris Salah</span>' : '<span class="pill ok">Semua baris Benar</span>') +
@@ -1912,7 +2173,8 @@ window.OLAH_GAS = "/**\n * OlahSKM \u2014 Rekap Responden Masuk (Google Apps Scr
   }
   function renderOlah(c) {
     var A = analysis();
-    c.appendChild(el('div', { class: 'toolbar' }, [el('span', { class: 'hint', text: A.all.n + ' responden · tabel utama lalu tabel per jenis layanan' }), el('span', { class: 'spacer' }),
+    c.appendChild(el('div', { class: 'toolbar' }, [el('span', { class: 'hint', text: A.all.n + ' responden · tabel utama, tabel per jenis layanan, lalu tabel dan grafik untuk laporan' }), el('span', { class: 'spacer' }),
+      el('button', { class: 'btn', html: ic('chart') + 'Ke tabel & grafik laporan', disabled: !A.all.n, onclick: function () { var t = document.getElementById('rekapLaporan'); if (t) t.scrollIntoView({ behavior: 'smooth' }); } }),
       el('button', { class: 'btn', html: ic('dl') + 'Unduh Excel olah data', onclick: exportOlahXlsx, disabled: !A.all.n })]));
     c.appendChild(el('div', { class: 'callout', html: '<b>Skor jawaban (PermenPANRB 14/2017):</b> Sangat setuju/Sangat sesuai = 4 · Setuju/Sesuai = 3 · Tidak setuju/Tidak sesuai = 2 · Sangat tidak setuju/Sangat tidak sesuai = 1. Nilai per unsur = rata-rata item penyusunnya; IKM = rata-rata 9 unsur; konversi × 25. Kategori: A ≥ 3,5324 (88,31) · B ≥ 3,0644 (76,61) · C ≥ 2,60 (65,00) · D.' }));
     if (!A.all.n) { c.appendChild(el('div', { class: 'card' }, [el('div', { class: 'empty', html: '<h3>Belum ada data untuk diolah</h3><p>Isi menu File Responses terlebih dahulu.</p>' })])); return; }
@@ -1932,6 +2194,7 @@ window.OLAH_GAS = "/**\n * OlahSKM \u2014 Rekap Responden Masuk (Google Apps Scr
       ]));
     });
     c.appendChild(secEl);
+    c.appendChild(rekapSection(A));
   }
   function olahAOA(recs, b, title) {
     var aoa = [['PENGOLAHAN DATA HASIL SURVEY KEPUASAN MASYARAKAT'], ['UNIT PELAYANAN', ':', 'KPU KABUPATEN PACITAN' + (title ? ' — ' + title : '')], [],
@@ -2415,7 +2678,7 @@ window.OLAH_GAS = "/**\n * OlahSKM \u2014 Rekap Responden Masuk (Google Apps Scr
     c.appendChild(tabs);
     if (!A.all.n) c.appendChild(el('div', { class: 'callout warn', html: 'Belum ada data responden. Narasi otomatis dan tabel laporan akan kosong sampai File Responses diisi.' }));
     var lay = el('div', { class: 'gen-layout' });
-    var form = el('div', {}), aside = el('aside', { class: 'gen-aside' });
+    var form = el('div', {}), aside = el('aside', { class: 'gen-aside', id: 'genAside' });
     lay.appendChild(form); lay.appendChild(aside); c.appendChild(lay);
     if (lapTab === 'skm') { formSKM(form, A); asideSKM(aside, A); } else { formTL(form, A); asideTL(aside, A); }
   }
@@ -2509,6 +2772,10 @@ window.OLAH_GAS = "/**\n * OlahSKM \u2014 Rekap Responden Masuk (Google Apps Scr
       el('div', { class: 'fld' }, [el('div', { class: 'fld-h', html: '2. Dokumentasi Terkait Pelaksanaan SKM <span class="hint">flyer, foto kegiatan</span>' }), imageList(R.lampDok, 'Dokumentasi pelaksanaan SKM ' + per)])
     ]));
   }
+  function refreshAside() {
+    var a = document.getElementById('genAside'); if (!a) return;
+    a.innerHTML = ''; if (lapTab === 'skm') asideSKM(a, analysis()); else asideTL(a, analysis());
+  }
   function checkItem(ok, text) { return el('div', {}, [el('span', { class: 'i ' + (ok ? 'ok' : 'no'), text: ok ? '✓' : '!' }), el('span', { html: text })]); }
   function asideSKM(aside, A) {
     var R = state.rep, p = prevInfo();
@@ -2585,8 +2852,9 @@ window.OLAH_GAS = "/**\n * OlahSKM \u2014 Rekap Responden Masuk (Google Apps Scr
         masukan: R.masukan, analPenutup: R.analPenutup, trenText: R.trenText, trenSeries: trenSeries(s.tahun), kes: R.kes });
       P.img.cover = imgData(R.cover);
       if (typeof Chart !== 'undefined') {
-        P.img.unsur = imgData(chartPNG(chartUnsurCfg(A, true), 1400, 700));
-        P.img.tren = imgData(chartPNG(chartTrenCfg(trenSeries(s.tahun), true), 1400, 640));
+        var cu = unsurChartCanvas(A, 2), ct = trenChartCanvas(2);
+        P.img.unsur = imgData({ src: cu.toDataURL('image/png'), w: cu.width, h: cu.height });
+        P.img.tren = imgData({ src: ct.toDataURL('image/png'), w: ct.width, h: ct.height });
       }
       P.img.layanan = {}; A.perLayanan.filter(function (b) { return b.n > 0; }).forEach(function (b) { P.img.layanan[b.name] = imgData(layananTablePNG(b)); });
       P.img.lampKues = R.lampKues.map(imgData); P.img.lampDok = R.lampDok.map(imgData);
