@@ -2167,35 +2167,44 @@ window.OLAH_GAS = "/**\n * OlahSKM \u2014 Rekap Responden Masuk (Google Apps Scr
     return sec;
   }
   /* Gambar tabel "Nilai Unsur <layanan>" persis seperti tampilan di layar (gaya Excel) */
+  /* Ukuran piksel penuh (tanpa skala) agar semua garis jatuh tepat di piksel yang sama: garis tipis, tidak dobel */
+  var RG = { lab: 320, cw: 131, rh: 38, pad: 2 };
+  RG.W = RG.pad * 2 + RG.lab + RG.cw * 16; RG.H = RG.pad * 2 + RG.rh * 10;
   function drawRingkasTable(x, W, H, b) {
-    var lab = 210, cw = (W - lab - 4) / 16, rh = 30, y0 = 1;
+    var L = RG.pad, T = RG.pad, lab = RG.lab, cw = RG.cw, rh = RG.rh, X0 = L + lab;
     var dash = function (v, d) { return v == null || isNaN(v) ? '–' : S.fmt(v, d); };
+    var BL = '#dce6f1', YL = '#ffff4d', cells = [];
+    function cell(cx, cy, w, h, txt, o) { cells.push({ x: cx, y: cy, w: w, h: h, t: String(txt), o: o || {} }); }
+    // kepala
+    cell(L, T, lab, rh * 3, 'Uraian', { bold: true, size: 20 });
+    cell(X0, T, cw * 16, rh, 'NILAI UNSUR ' + String(b.name).toUpperCase(), { bold: true, size: 20 });
+    S.UNSUR.forEach(function (u) { cell(X0 + u.items[0] * cw, T + rh, u.items.length * cw, rh, u.short, { bold: true, size: 18, fill: BL }); });
+    for (var i = 0; i < 16; i++) cell(X0 + i * cw, T + rh * 2, cw, rh, 'P' + (i + 1), { bold: true, size: 20, fill: BL });
+    var y = T + rh * 3;
+    cell(L, y, lab, rh, 'Total Nilai Pertanyaan', { left: true }); for (i = 0; i < 16; i++) cell(X0 + i * cw, y, cw, rh, b.n ? b.total[i] : '–'); y += rh;
+    cell(L, y, lab, rh, 'Nilai Rata-Rata Per Pertanyaan', { left: true }); for (i = 0; i < 16; i++) cell(X0 + i * cw, y, cw, rh, dash(b.avg[i], 2)); y += rh;
+    cell(L, y, lab, rh, 'Nilai Per Unsur', { left: true, bold: true, fill: BL });
+    S.UNSUR.forEach(function (u, ui) { cell(X0 + u.items[0] * cw, y, u.items.length * cw, rh, dash(b.unsur[ui], 2), { bold: true, fill: BL }); }); y += rh;
+    cell(L, y, lab, rh, 'Kategori Per Unsur', { left: true, bold: true, fill: BL });
+    S.UNSUR.forEach(function (u, ui) { cell(X0 + u.items[0] * cw, y, u.items.length * cw, rh, b.kategori[ui] || '–', { bold: true, fill: BL }); }); y += rh;
+    cell(L, y, lab, rh, 'IKM OPP', { left: true, bold: true, fill: YL }); cell(X0, y, cw * 16, rh, dash(b.ikm4, 4), { bold: true, fill: YL }); y += rh;
+    cell(L, y, lab, rh, 'IKM Konversi OPP', { left: true, bold: true }); cell(X0, y, cw * 16, rh, dash(b.ikm, 2), { bold: true }); y += rh;
+    cell(L, y, lab, rh, 'Mutu Layanan', { left: true, bold: true }); cell(X0, y, cw * 16, rh, b.mutu || '–', { bold: true });
+    // 1) latar  2) teks  3) garis — garis digambar sekali di koordinat bulat
     x.fillStyle = '#fff'; x.fillRect(0, 0, W, H);
-    function cell(cx, cy, w, h, txt, o) {
-      o = o || {}; x.fillStyle = o.fill || '#fff'; x.fillRect(cx, cy, w, h);
-      x.strokeStyle = '#000'; x.lineWidth = 1; x.strokeRect(Math.round(cx) + 0.5, Math.round(cy) + 0.5, Math.round(w), Math.round(h));
-      var fs = o.size || 13; x.font = (o.bold ? 'bold ' : '') + fs + 'px Arial';
-      while (fs > 8 && x.measureText(String(txt)).width > w - 8) { fs -= 0.5; x.font = (o.bold ? 'bold ' : '') + fs + 'px Arial'; }
-      x.fillStyle = '#000'; x.textBaseline = 'middle';
-      x.textAlign = o.left ? 'left' : 'center'; x.fillText(String(txt), o.left ? cx + 6 : cx + w / 2, cy + h / 2 + 1);
-    }
-    var BL = '#dce6f1', YL = '#ffff00';
-    cell(1, y0, lab, rh * 3, 'Uraian', { bold: true });
-    cell(1 + lab, y0, cw * 16, rh, 'NILAI UNSUR ' + String(b.name).toUpperCase(), { bold: true, size: 14 });
-    S.UNSUR.forEach(function (u) { cell(1 + lab + u.items[0] * cw, y0 + rh, u.items.length * cw, rh, u.short, { bold: true, fill: BL, size: 13 }); });
-    for (var i = 0; i < 16; i++) cell(1 + lab + i * cw, y0 + rh * 2, cw, rh, 'P' + (i + 1), { bold: true, fill: BL });
-    var y = y0 + rh * 3;
-    cell(1, y, lab, rh, 'Total Nilai Pertanyaan', { left: true }); for (i = 0; i < 16; i++) cell(1 + lab + i * cw, y, cw, rh, b.n ? b.total[i] : '–'); y += rh;
-    cell(1, y, lab, rh, 'Nilai Rata-Rata Per Pertanyaan', { left: true, size: 12.5 }); for (i = 0; i < 16; i++) cell(1 + lab + i * cw, y, cw, rh, dash(b.avg[i], 2)); y += rh;
-    cell(1, y, lab, rh, 'Nilai Per Unsur', { left: true, bold: true, fill: BL });
-    S.UNSUR.forEach(function (u, ui) { cell(1 + lab + u.items[0] * cw, y, u.items.length * cw, rh, dash(b.unsur[ui], 2), { bold: true, fill: BL }); }); y += rh;
-    cell(1, y, lab, rh, 'Kategori Per Unsur', { left: true, bold: true, fill: BL });
-    S.UNSUR.forEach(function (u, ui) { cell(1 + lab + u.items[0] * cw, y, u.items.length * cw, rh, b.kategori[ui] || '–', { bold: true, fill: BL }); }); y += rh;
-    cell(1, y, lab, rh, 'IKM OPP', { left: true, bold: true, fill: YL }); cell(1 + lab, y, cw * 16, rh, dash(b.ikm4, 4), { bold: true, fill: YL }); y += rh;
-    cell(1, y, lab, rh, 'IKM Konversi OPP', { left: true, bold: true }); cell(1 + lab, y, cw * 16, rh, dash(b.ikm, 2), { bold: true }); y += rh;
-    cell(1, y, lab, rh, 'Mutu Layanan', { left: true, bold: true }); cell(1 + lab, y, cw * 16, rh, b.mutu || '–', { bold: true });
+    cells.forEach(function (c) { x.fillStyle = c.o.fill || '#fff'; x.fillRect(c.x, c.y, c.w, c.h); });
+    x.textBaseline = 'middle';
+    cells.forEach(function (c) {
+      var fs = c.o.size || 20, wt = c.o.bold ? 'bold ' : '';
+      x.font = wt + fs + 'px Arial';
+      while (fs > 11 && x.measureText(c.t).width > c.w - 14) { fs -= 0.5; x.font = wt + fs + 'px Arial'; }
+      x.fillStyle = '#000'; x.textAlign = c.o.left ? 'left' : 'center';
+      x.fillText(c.t, c.o.left ? c.x + 8 : c.x + c.w / 2, c.y + c.h / 2 + 1);
+    });
+    x.strokeStyle = '#3a3a3a'; x.lineWidth = 1.5;
+    cells.forEach(function (c) { x.strokeRect(c.x, c.y, c.w, c.h); });
   }
-  function ringkasCanvas(b, scale) { return hiCanvas(1100, 30 * 10 + 3, scale || 2, function (x, w, h) { drawRingkasTable(x, w, h, b); }); }
+  function ringkasCanvas(b) { return hiCanvas(RG.W, RG.H, 1, function (x, w, h) { drawRingkasTable(x, w, h, b); }); }
 
   /* Excel Dashboard "Nilai per Jenis Layanan": desimal memakai koma (disimpan sebagai teks agar tampil sama di Excel mana pun) */
   function exportNilaiLayananXlsx() {
@@ -2267,8 +2276,7 @@ window.OLAH_GAS = "/**\n * OlahSKM \u2014 Rekap Responden Masuk (Google Apps Scr
     lay.forEach(function (b) {
       var fname = 'Nilai Unsur ' + b.name + ' TW ' + S.ROMAWI[state.settings.tw] + ' ' + state.settings.tahun;
       var hd = el('div', { class: 'card-h', html: '<h2>Nilai Unsur ' + esc(b.name) + '</h2><span class="hint">' + b.n + ' responden</span>' + (b.inList ? '' : ' <span class="pill warn">di luar daftar layanan triwulan ini</span>') + '<span class="spacer"></span>' + olahStatus(b) });
-      hd.appendChild(el('button', { class: 'btn sm', html: ic('dl') + 'PNG', onclick: function () { saveCanvas(ringkasCanvas(b, 2), fname, 'png'); } }));
-      hd.appendChild(el('button', { class: 'btn sm', html: ic('dl') + 'JPG', onclick: function () { saveCanvas(ringkasCanvas(b, 2), fname, 'jpg'); } }));
+      hd.appendChild(el('button', { class: 'btn sm', html: ic('dl') + 'Unduh PNG', onclick: function () { saveCanvas(ringkasCanvas(b), fname, 'png'); } }));
       secEl.appendChild(el('div', { class: 'card' }, [
         hd,
         el('div', { class: 'xl-wrap', html: olahRingkasHTML(b) })
