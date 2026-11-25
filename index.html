@@ -1780,7 +1780,7 @@ window.OLAH_GAS = "/**\n * OlahSKM \u2014 Rekap Responden Masuk (Google Apps Scr
       var head = el('div', { class: 'card-h' }, [el('h2', { text: 'Nilai per Jenis Layanan' }), el('span', { class: 'spacer' }),
         el('div', { class: 'tabs', style: 'border:0' }, [['konv', 'Konversi'], ['avg', 'Rata-rata (skala 4)']].map(function (m) {
           return el('button', { 'aria-selected': dashMode === m[0] ? 'true' : 'false', text: m[1], onclick: function () { dashMode = m[0]; render(); } });
-        }))]);
+        })), el('button', { class: 'btn sm', html: ic('dl') + 'Unduh Excel', title: 'Tabel P1–P16 dan U1–U9, nilai konversi dan skala 4, desimal memakai koma', onclick: exportNilaiLayananXlsx })]);
       cl.appendChild(head);
       var conv = function (v) { return v == null ? '–' : (dashMode === 'konv' ? f2(v * 25) : S.fmt(v, 3)); };
       var nameCell = function (b) { return '<td>' + esc(b.name) + (b.inList ? '' : ' <span class="pill warn" title="Tidak ada di daftar layanan triwulan ini">di luar daftar</span>') + '</td><td class="n">' + b.n + '</td>'; };
@@ -2166,6 +2166,83 @@ window.OLAH_GAS = "/**\n * OlahSKM \u2014 Rekap Responden Masuk (Google Apps Scr
     sec.appendChild(tableCard('Jenis Layanan Publik KPU', '', rkLayHTML(A)));
     return sec;
   }
+  /* Gambar tabel "Nilai Unsur <layanan>" persis seperti tampilan di layar (gaya Excel) */
+  function drawRingkasTable(x, W, H, b) {
+    var lab = 210, cw = (W - lab - 4) / 16, rh = 30, y0 = 1;
+    var dash = function (v, d) { return v == null || isNaN(v) ? '–' : S.fmt(v, d); };
+    x.fillStyle = '#fff'; x.fillRect(0, 0, W, H);
+    function cell(cx, cy, w, h, txt, o) {
+      o = o || {}; x.fillStyle = o.fill || '#fff'; x.fillRect(cx, cy, w, h);
+      x.strokeStyle = '#000'; x.lineWidth = 1; x.strokeRect(Math.round(cx) + 0.5, Math.round(cy) + 0.5, Math.round(w), Math.round(h));
+      var fs = o.size || 13; x.font = (o.bold ? 'bold ' : '') + fs + 'px Arial';
+      while (fs > 8 && x.measureText(String(txt)).width > w - 8) { fs -= 0.5; x.font = (o.bold ? 'bold ' : '') + fs + 'px Arial'; }
+      x.fillStyle = '#000'; x.textBaseline = 'middle';
+      x.textAlign = o.left ? 'left' : 'center'; x.fillText(String(txt), o.left ? cx + 6 : cx + w / 2, cy + h / 2 + 1);
+    }
+    var BL = '#dce6f1', YL = '#ffff00';
+    cell(1, y0, lab, rh * 3, 'Uraian', { bold: true });
+    cell(1 + lab, y0, cw * 16, rh, 'NILAI UNSUR ' + String(b.name).toUpperCase(), { bold: true, size: 14 });
+    S.UNSUR.forEach(function (u) { cell(1 + lab + u.items[0] * cw, y0 + rh, u.items.length * cw, rh, u.short, { bold: true, fill: BL, size: 13 }); });
+    for (var i = 0; i < 16; i++) cell(1 + lab + i * cw, y0 + rh * 2, cw, rh, 'P' + (i + 1), { bold: true, fill: BL });
+    var y = y0 + rh * 3;
+    cell(1, y, lab, rh, 'Total Nilai Pertanyaan', { left: true }); for (i = 0; i < 16; i++) cell(1 + lab + i * cw, y, cw, rh, b.n ? b.total[i] : '–'); y += rh;
+    cell(1, y, lab, rh, 'Nilai Rata-Rata Per Pertanyaan', { left: true, size: 12.5 }); for (i = 0; i < 16; i++) cell(1 + lab + i * cw, y, cw, rh, dash(b.avg[i], 2)); y += rh;
+    cell(1, y, lab, rh, 'Nilai Per Unsur', { left: true, bold: true, fill: BL });
+    S.UNSUR.forEach(function (u, ui) { cell(1 + lab + u.items[0] * cw, y, u.items.length * cw, rh, dash(b.unsur[ui], 2), { bold: true, fill: BL }); }); y += rh;
+    cell(1, y, lab, rh, 'Kategori Per Unsur', { left: true, bold: true, fill: BL });
+    S.UNSUR.forEach(function (u, ui) { cell(1 + lab + u.items[0] * cw, y, u.items.length * cw, rh, b.kategori[ui] || '–', { bold: true, fill: BL }); }); y += rh;
+    cell(1, y, lab, rh, 'IKM OPP', { left: true, bold: true, fill: YL }); cell(1 + lab, y, cw * 16, rh, dash(b.ikm4, 4), { bold: true, fill: YL }); y += rh;
+    cell(1, y, lab, rh, 'IKM Konversi OPP', { left: true, bold: true }); cell(1 + lab, y, cw * 16, rh, dash(b.ikm, 2), { bold: true }); y += rh;
+    cell(1, y, lab, rh, 'Mutu Layanan', { left: true, bold: true }); cell(1 + lab, y, cw * 16, rh, b.mutu || '–', { bold: true });
+  }
+  function ringkasCanvas(b, scale) { return hiCanvas(1100, 30 * 10 + 3, scale || 2, function (x, w, h) { drawRingkasTable(x, w, h, b); }); }
+
+  /* Excel Dashboard "Nilai per Jenis Layanan": desimal memakai koma (disimpan sebagai teks agar tampil sama di Excel mana pun) */
+  function exportNilaiLayananXlsx() {
+    if (typeof ExcelJS === 'undefined') return toast('Pustaka Excel belum termuat. Periksa koneksi internet lalu muat ulang halaman.', 5000);
+    var A = analysis(), a = A.all, per = perLabel(state.settings.tw, state.settings.tahun);
+    var lay = A.perLayanan.filter(function (b) { return b.inList || b.n > 0; });
+    var thin = { style: 'thin', color: { argb: 'FF000000' } }, BORDER = { top: thin, left: thin, bottom: thin, right: thin };
+    var koma = function (v, d) { return v == null || isNaN(v) ? '–' : Number(v).toFixed(d).replace('.', ','); };
+    busy(true, 'Menyusun berkas Excel…');
+    try {
+      var wb = new ExcelJS.Workbook(); wb.creator = 'OlahSKM KPU Kabupaten Pacitan';
+      function sheet(name, ttl, heads, rows, widths) {
+        var ws = wb.addWorksheet(name, { pageSetup: { orientation: 'landscape', paperSize: 9, fitToPage: true, fitToWidth: 1, fitToHeight: 0 }, views: [{ state: 'frozen', xSplit: 2, ySplit: 3 }] });
+        ws.mergeCells(1, 1, 1, heads.length); ws.getCell(1, 1).value = ttl; ws.getCell(1, 1).font = { name: 'Arial', size: 12, bold: true };
+        ws.columns = widths.map(function (w) { return { width: w }; });
+        ws.getRow(3).values = heads;
+        rows.forEach(function (r, i) { ws.getRow(4 + i).values = r; });
+        for (var rr = 3; rr < 4 + rows.length; rr++) for (var cc = 1; cc <= heads.length; cc++) {
+          var c = ws.getCell(rr, cc), head = rr === 3, tot = rr === 3 + rows.length;
+          c.border = BORDER; c.font = { name: 'Arial', size: 10.5, bold: head || tot || cc === heads.length - 1 };
+          c.alignment = { vertical: 'middle', horizontal: cc === 1 ? 'left' : (cc === heads.length ? 'center' : 'right'), wrapText: cc === 1 };
+          if (head) { c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFDFF4F2' } }; c.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true }; }
+          if (tot) c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEEF5F4' } };
+        }
+        ws.getRow(3).height = 30;
+      }
+      [['konv', 'Konversi', 2], ['avg', 'Skala 4', 3]].forEach(function (m) {
+        var val = function (v) { return v == null ? '–' : koma(m[0] === 'konv' ? v * 25 : v, m[2]); };
+        var ikm = function (b) { return b.n ? (m[0] === 'konv' ? koma(b.ikm, 2) : koma(b.ikm4, 3)) : '–'; };
+        var rowsP = lay.map(function (b) { return [b.name, b.n].concat(b.avg.map(val)).concat([ikm(b), b.n ? b.mutu : '–']); })
+          .concat([['Seluruh layanan', a.n].concat(a.avg.map(val)).concat([ikm(a), a.mutu || '–'])]);
+        sheet('Per Pertanyaan (' + m[1] + ')', 'Nilai per Pertanyaan (P1–P16) per Jenis Layanan — ' + m[1] + ' — ' + per,
+          ['Jenis Layanan', 'Resp.'].concat(S.QUESTIONS.map(function (q, i) { return 'P' + (i + 1); })).concat(['IKM', 'Mutu']), rowsP,
+          [38, 7].concat(S.QUESTIONS.map(function () { return 8; })).concat([9, 7]));
+        var rowsU = lay.map(function (b) { return [b.name, b.n].concat(b.unsur.map(val)).concat([ikm(b), b.n ? b.mutu : '–']); })
+          .concat([['Seluruh layanan', a.n].concat(a.unsur.map(val)).concat([ikm(a), a.mutu || '–'])]);
+        sheet('Per Unsur (' + m[1] + ')', 'Nilai per Unsur (U1–U9) per Jenis Layanan — ' + m[1] + ' — ' + per,
+          ['Jenis Layanan', 'Resp.'].concat(S.UNSUR.map(function (u) { return u.k + ' ' + u.short; })).concat(['IKM', 'Mutu']), rowsU,
+          [38, 7].concat(S.UNSUR.map(function () { return 12; })).concat([9, 7]));
+      });
+      wb.xlsx.writeBuffer().then(function (buf) {
+        var name = 'Nilai per Jenis Layanan SKM TW ' + S.ROMAWI[state.settings.tw] + ' ' + state.settings.tahun + ' - KPU Kab Pacitan.xlsx';
+        download(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), name);
+        busy(false); toast('Excel diunduh: ' + name, 4500);
+      }).catch(function (e) { busy(false); toast('Gagal membuat Excel: ' + e.message, 5000); });
+    } catch (e) { busy(false); console.error(e); toast('Gagal membuat Excel: ' + e.message, 5000); }
+  }
   function olahStatus(b) {
     if (!b.n) return '<span class="pill">0 responden</span>';
     return (b.invalid ? '<span class="pill bad">' + b.invalid + ' baris Salah</span>' : '<span class="pill ok">Semua baris Benar</span>') +
@@ -2188,8 +2265,12 @@ window.OLAH_GAS = "/**\n * OlahSKM \u2014 Rekap Responden Masuk (Google Apps Scr
     var lay = A.perLayanan.filter(function (b) { return b.inList || b.n > 0; });
     var secEl = el('section', { class: 'olah-sec' }, [el('h2', { class: 'sec-h', html: 'Pengolahan per Jenis Layanan <small>rumus sama dengan tabel utama, dihitung terpisah untuk ' + lay.length + ' jenis layanan ' + esc(perLabel(state.settings.tw, state.settings.tahun)) + '</small>' })]);
     lay.forEach(function (b) {
+      var fname = 'Nilai Unsur ' + b.name + ' TW ' + S.ROMAWI[state.settings.tw] + ' ' + state.settings.tahun;
+      var hd = el('div', { class: 'card-h', html: '<h2>Nilai Unsur ' + esc(b.name) + '</h2><span class="hint">' + b.n + ' responden</span>' + (b.inList ? '' : ' <span class="pill warn">di luar daftar layanan triwulan ini</span>') + '<span class="spacer"></span>' + olahStatus(b) });
+      hd.appendChild(el('button', { class: 'btn sm', html: ic('dl') + 'PNG', onclick: function () { saveCanvas(ringkasCanvas(b, 2), fname, 'png'); } }));
+      hd.appendChild(el('button', { class: 'btn sm', html: ic('dl') + 'JPG', onclick: function () { saveCanvas(ringkasCanvas(b, 2), fname, 'jpg'); } }));
       secEl.appendChild(el('div', { class: 'card' }, [
-        el('div', { class: 'card-h', html: '<h2>Nilai Unsur ' + esc(b.name) + '</h2><span class="hint">' + b.n + ' responden</span>' + (b.inList ? '' : ' <span class="pill warn">di luar daftar layanan triwulan ini</span>') + '<span class="spacer"></span>' + olahStatus(b) }),
+        hd,
         el('div', { class: 'xl-wrap', html: olahRingkasHTML(b) })
       ]));
     });
