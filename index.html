@@ -343,6 +343,94 @@ table.rpt-resp { max-width: 720px; }
 table.rpt-lay { max-width: 720px; }
 table.rpt-lay th { background: #d9d9d9; font-weight: 400; }
 
+
+/* ================= Dashboard baru ================= */
+@keyframes fxUp { from { opacity: .35; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes gFill { from { stroke-dasharray: 0 999; } to { stroke-dasharray: var(--len) 999; } }
+.fx { animation: fxUp .5s ease-out both; }
+.lay-grid .fx:nth-child(2) { animation-delay: .05s; } .lay-grid .fx:nth-child(3) { animation-delay: .1s; } .lay-grid .fx:nth-child(4) { animation-delay: .15s; } .lay-grid .fx:nth-child(5) { animation-delay: .2s; } .lay-grid .fx:nth-child(6) { animation-delay: .25s; }
+.hero { position: relative; overflow: hidden; border-radius: 18px; color: #fff; display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(220px, .9fr) minmax(0, 1fr); gap: 22px; align-items: center; padding: 26px 28px;
+  background: radial-gradient(120% 140% at 100% 0%, #2f8c8a 0%, rgba(47,140,138,0) 55%), linear-gradient(135deg, #0e3d4a 0%, #0f5d64 55%, #13756f 100%); box-shadow: 0 10px 30px rgba(14, 61, 74, .22); }
+.hero::before, .hero::after { content: ""; position: absolute; border-radius: 50%; pointer-events: none; }
+.hero::before { width: 420px; height: 420px; right: -140px; top: -210px; border: 26px solid rgba(226, 166, 78, .16); }
+.hero::after { width: 300px; height: 300px; left: -120px; bottom: -190px; border: 18px solid rgba(255, 255, 255, .06); }
+.hero > * { position: relative; z-index: 1; min-width: 0; }
+.hero-eye { font-size: 12px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: rgba(255,255,255,.78); }
+.hero-val { font: 800 68px/1 "Montserrat", var(--f-ui); letter-spacing: -.03em; margin: 8px 0 12px; }
+.hero-badges { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.mutu-big { display: inline-grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; background: #f3c26b; color: #0e3d4a; font: 800 22px "Montserrat", var(--f-ui); box-shadow: 0 4px 12px rgba(0,0,0,.15); }
+.hero-ml { font-weight: 700; font-size: 16px; }
+.delta { display: inline-flex; align-items: center; gap: 4px; font-size: 12.5px; font-weight: 700; padding: 4px 10px; border-radius: 99px; background: rgba(255,255,255,.14); color: #fff; }
+.delta.down { background: rgba(255, 140, 120, .25); }
+.delta.lt { background: var(--accent-soft); color: var(--accent); } .delta.lt.down { background: var(--bad-soft); color: var(--bad); }
+.hero-sub { margin-top: 14px; font-size: 13px; color: rgba(255,255,255,.8); }
+.gauge { width: 100%; max-width: 300px; display: block; margin: 0 auto; overflow: visible; }
+.gauge .g-fill { animation: gFill 1.1s cubic-bezier(.2,.7,.2,1) both; }
+.gauge .gt { font: 600 10px var(--f-ui); fill: rgba(255,255,255,.65); } .gauge .gz { font: 800 11px "Montserrat", var(--f-ui); fill: rgba(255,255,255,.85); }
+.hero-stats { display: flex; flex-direction: column; gap: 10px; }
+.hs { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.16); border-radius: 12px; padding: 10px 14px; display: grid; grid-template-columns: 1fr auto; column-gap: 10px; align-items: baseline; backdrop-filter: blur(4px); }
+.hs-l { font-size: 11.5px; font-weight: 600; color: rgba(255,255,255,.75); text-transform: uppercase; letter-spacing: .06em; }
+.hs b { grid-row: span 2; font: 800 26px/1 "Montserrat", var(--f-ui); align-self: center; }
+.hs-s { font-size: 12px; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hs-bar { grid-column: 1 / -1; height: 5px; border-radius: 9px; background: rgba(255,255,255,.18); margin-top: 6px; overflow: hidden; } .hs-bar i { display: block; height: 100%; background: #f3c26b; border-radius: 9px; }
+.sec-block { display: flex; flex-direction: column; gap: 14px; }
+.sb-h { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; } .sb-h h2 { font-size: 17px; color: var(--accent-2); letter-spacing: -.01em; } .sb-h .spacer { flex: 1; }
+.lay-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
+@media (min-width: 1240px) { .lay-grid { grid-template-columns: repeat(var(--n), minmax(0, 1fr)); } }
+.lay-card { position: relative; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 6px; transition: transform .15s, box-shadow .15s; overflow: hidden; }
+.lay-card::before { content: ""; position: absolute; inset: 0 0 auto; height: 4px; background: linear-gradient(90deg, #0f5d64, #2f8c8a); }
+.lay-card.top::before { background: linear-gradient(90deg, #e2a64e, #f3c26b); }
+.lay-card:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(14, 61, 74, .1); }
+.lay-card.empty-l { background: repeating-linear-gradient(135deg, #fff, #fff 8px, var(--line2) 8px, var(--line2) 16px); }
+.lay-card.empty-l::before { background: var(--line); }
+.lc-top { display: flex; justify-content: space-between; align-items: center; }
+.lc-rank { font: 800 12px var(--f-num); color: var(--muted); background: var(--line2); padding: 2px 8px; border-radius: 99px; }
+.lay-card.top .lc-rank { background: var(--gold-soft); color: var(--gold-ink); }
+.lay-card h3 { font-size: 14.5px; line-height: 1.3; min-height: 2.6em; color: var(--ink); }
+.lc-val { font: 800 34px/1 "Montserrat", var(--f-ui); color: var(--accent-2); letter-spacing: -.02em; }
+.lc-meta { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); }
+.lc-share { height: 5px; background: var(--line2); border-radius: 9px; overflow: hidden; } .lc-share i { display: block; height: 100%; background: var(--teal); border-radius: 9px; }
+.spark { width: 100%; height: 42px; margin-top: 6px; }
+.lc-foot { display: flex; justify-content: space-between; gap: 6px; font-size: 11.5px; color: var(--good); font-weight: 600; } .lc-foot .lo { color: var(--gold-ink); }
+.lc-none { color: var(--muted); font-size: 13px; padding: 18px 0; }
+.grid-21 { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 18px; }
+.lgd { font-size: 12px; color: var(--muted); display: inline-flex; gap: 6px; align-items: center; } .lgd i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; } .lgd i.t { background: #1d8f88; } .lgd i.a { background: #e2a64e; margin-left: 8px; } .lgd i.ln { width: 18px; height: 0; border-top: 2px dashed rgba(15,93,100,.6); border-radius: 0; margin-left: 8px; }
+.ks-h { font-size: 11.5px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; margin: 6px 0 8px; } .ks-h.up { color: var(--good); } .ks-h.dn { color: var(--gold-ink); margin-top: 16px; }
+.ks-l { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.ks-l li { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 10px; align-items: center; }
+.ks-r { width: 28px; height: 28px; border-radius: 9px; display: grid; place-items: center; font: 800 12px var(--f-num); }
+.ks-l li.up .ks-r { background: var(--good-soft); color: var(--good); } .ks-l li.dn .ks-r { background: var(--gold-soft); color: var(--gold-ink); }
+.ks-n { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; } .ks-n span { min-width: 0; } .ks-n b { font-size: 14px; }
+.ks-t { display: block; height: 6px; background: var(--line2); border-radius: 9px; margin-top: 5px; overflow: hidden; } .ks-t i { display: block; height: 100%; border-radius: 9px; }
+.ks-l li.up .ks-t i { background: linear-gradient(90deg, #2f8c8a, #0f5d64); } .ks-l li.dn .ks-t i { background: linear-gradient(90deg, #f3c26b, #c98a2e); }
+.stack { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+.dn-wrap { display: grid; grid-template-columns: 130px minmax(0, 1fr); gap: 16px; align-items: center; }
+.donut { width: 130px; height: 130px; } .donut circle { transition: stroke-dasharray .6s; }
+.donut .dn-v { font: 800 22px "Montserrat", var(--f-ui); fill: var(--accent-2); } .donut .dn-l { font: 600 9px var(--f-ui); fill: var(--muted); }
+ul.lg, ul.hb { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 7px; font-size: 13px; }
+ul.lg li { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto 54px; gap: 8px; align-items: center; }
+ul.lg i { width: 10px; height: 10px; border-radius: 3px; } ul.lg em, ul.hb em { font-style: normal; color: var(--muted); text-align: right; font-size: 12px; }
+ul.hb li { display: grid; grid-template-columns: minmax(90px, 38%) minmax(0, 1fr) 30px 52px; gap: 10px; align-items: center; }
+.hb-l { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hb-t { height: 10px; background: var(--line2); border-radius: 9px; overflow: hidden; } .hb-t i { display: block; height: 100%; border-radius: 9px; background: linear-gradient(90deg, #2f8c8a, #0f5d64); }
+ul.hb b { text-align: right; }
+.sub-l { margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--line); display: flex; flex-direction: column; gap: 8px; }
+.quote-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+.quote { margin: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px 16px 14px; position: relative; display: flex; flex-direction: column; gap: 10px; }
+.quote::before { content: "\201C"; position: absolute; top: -6px; left: 12px; font: 800 48px/1 Georgia, serif; color: var(--gold); opacity: .55; }
+.quote blockquote { margin: 0; padding-top: 10px; font-size: 13.5px; line-height: 1.55; color: var(--ink); }
+.quote figcaption { font-size: 12px; color: var(--muted); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: auto; }
+.q-tag { background: var(--accent-soft); color: var(--accent); font-weight: 700; padding: 2px 8px; border-radius: 99px; font-size: 11px; }
+@media (max-width: 1100px) {
+  .hero { grid-template-columns: minmax(0, 1fr) minmax(200px, .8fr); } .hero-stats { grid-column: 1 / -1; flex-direction: row; flex-wrap: wrap; } .hs { flex: 1 1 200px; }
+  .grid-21 { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 760px) {
+  .hero { grid-template-columns: minmax(0, 1fr); padding: 20px; } .hero-val { font-size: 54px; } .hero-gauge { max-width: 260px; margin: 0 auto; width: 100%; }
+  .hero-stats { flex-direction: column; } .hs { flex: none; }
+  .dn-wrap { grid-template-columns: 110px minmax(0, 1fr); } .donut { width: 110px; height: 110px; }
+}
+@media (prefers-reduced-motion: reduce) { .fx, .gauge .g-fill { animation: none !important; } .lay-card:hover { transform: none; } }
 </style>
 </head>
 <body>
@@ -1777,45 +1865,155 @@ window.OLAH_GAS = "/**\n * OlahSKM \u2014 Rekap Responden Masuk (Google Apps Scr
      ================================================================ */
   var dashMode = 'konv';
   function mutuChip(m) { return m ? '<span class="mutu ' + m + '">' + m + '</span>' : '<span class="mutu">–</span>'; }
+  /* ================================================================
+     DASHBOARD — tampilan baru: panel IKM, kartu layanan, kekuatan &
+     prioritas, grafik bergradasi, donat profil, suara responden
+     ================================================================ */
+  var PAL = ['#0f5d64', '#e2a64e', '#2f8c8a', '#7cc2b8', '#b07d2a', '#5c8fb0', '#c9dedb', '#d98b6a', '#8fb3a6', '#f0cf8f'];
+  var reduceMotion = false; try { reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
+  function countUp(root) {
+    $$('[data-count]', root).forEach(function (e) {
+      var to = parseFloat(e.getAttribute('data-count')), dec = +e.getAttribute('data-dec') || 0;
+      if (reduceMotion || isNaN(to)) { e.textContent = to.toFixed(dec); return; }
+      var t0 = null, dur = 900, from = to * 0.6;
+      function step(ts) { if (!t0) t0 = ts; var k = Math.min(1, (ts - t0) / dur), ease = 1 - Math.pow(1 - k, 3); e.textContent = (from + (to - from) * ease).toFixed(dec); if (k < 1) requestAnimationFrame(step); }
+      requestAnimationFrame(step);
+    });
+  }
+  function gaugeSVG(v) {
+    var cx = 120, cy = 118, r = 92, lo = 25, hi = 100;
+    var pt = function (x) { var th = Math.PI * (1 - (Math.max(lo, Math.min(hi, x)) - lo) / (hi - lo)); return [cx + r * Math.cos(th), cy - r * Math.sin(th)]; };
+    var arc = function (a1, a2, rr) { var p1 = pt(a1), p2 = pt(a2); if (rr) { var k = rr / r; p1 = [cx + (p1[0] - cx) * k, cy + (p1[1] - cy) * k]; p2 = [cx + (p2[0] - cx) * k, cy + (p2[1] - cy) * k]; } return 'M' + p1[0].toFixed(1) + ' ' + p1[1].toFixed(1) + ' A' + (rr || r) + ' ' + (rr || r) + ' 0 0 1 ' + p2[0].toFixed(1) + ' ' + p2[1].toFixed(1); };
+    var zones = [[25, 64.99, 'rgba(255,140,120,.55)', 'D'], [65, 76.6, 'rgba(255,205,120,.6)', 'C'], [76.61, 88.3, 'rgba(180,235,225,.6)', 'B'], [88.31, 100, '#f3c26b', 'A']];
+    var z = zones.map(function (q) { return '<path d="' + arc(q[0], q[1], r + 16) + '" stroke="' + q[2] + '" stroke-width="5" fill="none"/>'; }).join('');
+    var zl = zones.map(function (q) { var m = pt((q[0] + q[1]) / 2), k = (r + 30) / r; return '<text x="' + (cx + (m[0] - cx) * k).toFixed(1) + '" y="' + (cy + (m[1] - cy) * k + 4).toFixed(1) + '" text-anchor="middle" class="gz">' + q[3] + '</text>'; }).join('');
+    var len = Math.PI * r * ((Math.max(lo, Math.min(hi, v)) - lo) / (hi - lo)), tip = pt(v);
+    return '<svg viewBox="0 0 240 140" class="gauge" role="img" aria-label="Meteran IKM ' + f2(v) + ' dari 100">' + z + zl +
+      '<path d="' + arc(lo, hi) + '" stroke="rgba(255,255,255,.18)" stroke-width="16" fill="none" stroke-linecap="round"/>' +
+      '<path class="g-fill" d="' + arc(lo, hi) + '" stroke="url(#gG)" stroke-width="16" fill="none" stroke-linecap="round" style="stroke-dasharray:' + len.toFixed(1) + ' 999;--len:' + len.toFixed(1) + '"/>' +
+      '<circle cx="' + tip[0].toFixed(1) + '" cy="' + tip[1].toFixed(1) + '" r="9" fill="#fff" stroke="#f3c26b" stroke-width="4"/>' +
+      '<text x="' + (cx - r) + '" y="' + (cy + 18) + '" text-anchor="middle" class="gt">25</text><text x="' + (cx + r) + '" y="' + (cy + 18) + '" text-anchor="middle" class="gt">100</text>' +
+      '<defs><linearGradient id="gG" x1="0" x2="1"><stop offset="0" stop-color="#7fd6c9"/><stop offset="1" stop-color="#ffffff"/></linearGradient></defs></svg>';
+  }
+  function sparkSVG(vals, w, h) {
+    var nn = vals.filter(function (v) { return v != null; }); if (!nn.length) return '<svg viewBox="0 0 ' + w + ' ' + h + '" class="spark"></svg>';
+    var mn = Math.min.apply(null, nn) - 2, mx = Math.max(100, Math.max.apply(null, nn)), bw = w / vals.length, low = Math.min.apply(null, nn);
+    return '<svg viewBox="0 0 ' + w + ' ' + h + '" class="spark" preserveAspectRatio="none" aria-hidden="true">' + vals.map(function (v, i) {
+      if (v == null) return ''; var bh = Math.max(3, (v - mn) / (mx - mn) * (h - 2));
+      return '<rect x="' + (i * bw + bw * 0.18).toFixed(1) + '" y="' + (h - bh).toFixed(1) + '" width="' + (bw * 0.64).toFixed(1) + '" height="' + bh.toFixed(1) + '" rx="2" fill="' + (v === low ? '#e2a64e' : '#2f8c8a') + '"><title>' + S.UNSUR[i].k + ' ' + S.UNSUR[i].short + ': ' + f2(v) + '</title></rect>';
+    }).join('') + '</svg>';
+  }
+  function donutSVG(rows, total, label) {
+    var r = 46, C = 2 * Math.PI * r, off = 0;
+    var segs = rows.map(function (x, i) { var len = total ? x.n / total * C : 0, seg = '<circle r="' + r + '" cx="60" cy="60" fill="none" stroke="' + PAL[i % PAL.length] + '" stroke-width="18" stroke-dasharray="' + Math.max(0, len - 1.5).toFixed(2) + ' ' + C.toFixed(2) + '" stroke-dashoffset="' + (-off).toFixed(2) + '" transform="rotate(-90 60 60)"><title>' + esc(x.label) + ': ' + x.n + ' (' + S.pct(x.pct) + ')</title></circle>'; off += len; return seg; }).join('');
+    return '<svg viewBox="0 0 120 120" class="donut" role="img" aria-label="' + esc(label) + '"><circle r="' + r + '" cx="60" cy="60" fill="none" stroke="var(--line2)" stroke-width="18"/>' + segs +
+      '<text x="60" y="57" text-anchor="middle" class="dn-v">' + total + '</text><text x="60" y="73" text-anchor="middle" class="dn-l">responden</text></svg>';
+  }
+  function legendHTML(rows) {
+    return '<ul class="lg">' + rows.map(function (x, i) { return '<li><i style="background:' + PAL[i % PAL.length] + '"></i><span>' + esc(x.label) + '</span><b class="tnum">' + x.n + '</b><em class="tnum">' + S.pct(x.pct, 1) + '</em></li>'; }).join('') + '</ul>';
+  }
+  function barsHTML(rows) {
+    var max = Math.max.apply(null, rows.map(function (r) { return r.n; }).concat([1]));
+    return '<ul class="hb">' + rows.map(function (x) { return '<li><span class="hb-l">' + esc(x.label) + '</span><span class="hb-t"><i style="width:' + (x.n / max * 100).toFixed(1) + '%"></i></span><b class="tnum">' + x.n + '</b><em class="tnum">' + S.pct(x.pct, 1) + '</em></li>'; }).join('') + '</ul>';
+  }
+  function dashUnsurCfg(A) {
+    var cfg = chartUnsurCfg(A), vals = A.all.unsurK, rk = S.rankUnsur(vals), low = rk.slice(-3).map(function (x) { return x.i; });
+    cfg.data.datasets[0].backgroundColor = function (ctx) {
+      var ch = ctx.chart, ar = ch.chartArea; if (!ar) return '#0f5d64';
+      var isLow = low.indexOf(ctx.dataIndex) >= 0, g = ch.ctx.createLinearGradient(0, ar.bottom, 0, ar.top);
+      if (isLow) { g.addColorStop(0, '#c98a2e'); g.addColorStop(1, '#f3c26b'); } else { g.addColorStop(0, '#0f5d64'); g.addColorStop(1, '#38b3a6'); }
+      return g;
+    };
+    cfg.data.datasets[0].borderRadius = 8; cfg.data.datasets[0].maxBarThickness = 54;
+    cfg.data.labels = S.UNSUR.map(function (u) { return [u.k, u.short]; });
+    cfg.options.scales.x.ticks.font = { size: 11.5, weight: '600' };
+    cfg.options.animation = reduceMotion ? false : { duration: 900, easing: 'easeOutQuart', delay: function (c) { return c.type === 'data' ? c.dataIndex * 60 : 0; } };
+    cfg.plugins.push({ id: 'thrA', afterDatasetsDraw: function (ch) {
+      var y = ch.scales.y.getPixelForValue(88.31), ar = ch.chartArea; if (y < ar.top || y > ar.bottom) return;
+      var x = ch.ctx; x.save(); x.setLineDash([5, 5]); x.strokeStyle = 'rgba(15,93,100,.55)'; x.lineWidth = 1.5; x.beginPath(); x.moveTo(ar.left, y); x.lineTo(ar.right, y); x.stroke();
+      x.restore();
+    } });
+    return cfg;
+  }
+  function dashTrenCfg(series) {
+    var cfg = chartTrenCfg(series), d = cfg.data.datasets[0];
+    d.fill = true; d.tension = 0.35; d.borderWidth = 3; d.pointRadius = 6; d.pointHoverRadius = 8; d.pointBackgroundColor = '#fff'; d.pointBorderWidth = 3; d.borderColor = '#0f5d64'; d.pointBorderColor = '#0f5d64';
+    d.backgroundColor = function (ctx) { var ch = ctx.chart, ar = ch.chartArea; if (!ar) return 'rgba(47,140,138,.15)'; var g = ch.ctx.createLinearGradient(0, ar.top, 0, ar.bottom); g.addColorStop(0, 'rgba(47,140,138,.32)'); g.addColorStop(1, 'rgba(47,140,138,0)'); return g; };
+    cfg.options.animation = reduceMotion ? false : { duration: 1000, easing: 'easeOutQuart' };
+    return cfg;
+  }
+
   function renderDashboard(c) {
-    var A = analysis(), a = A.all;
+    var A = analysis(), a = A.all, per = perLabel(state.settings.tw, state.settings.tahun);
     if (!a.n) {
-      c.appendChild(el('div', { class: 'card' }, [el('div', { class: 'empty', html: '<h3>Belum ada jawaban responden untuk ' + esc(perLabel(state.settings.tw, state.settings.tahun)) + '</h3><p>Salin seluruh isi sheet "Form Responses 1" dari Google Spreadsheet lalu tempel di menu File Responses, atau impor berkas Excel/CSV hasil unduhan Google Form. Dashboard, pengolahan, dan laporan akan terisi otomatis.</p>' }, [
+      c.appendChild(el('div', { class: 'card' }, [el('div', { class: 'empty', html: '<h3>Belum ada jawaban responden untuk ' + esc(per) + '</h3><p>Salin seluruh isi sheet "Form Responses 1" dari Google Spreadsheet lalu tempel di menu File Responses, atau impor berkas Excel/CSV hasil unduhan Google Form. Dashboard, pengolahan, dan laporan akan terisi otomatis.</p>' }, [
         el('div', { class: 'row' }, [el('button', { class: 'btn primary', html: ic('resp') + 'Buka File Responses', onclick: function () { go('responses'); } }),
           el('button', { class: 'btn', html: ic('spark') + 'Coba dengan data contoh', onclick: function () { loadDemo(); } })])
       ])]));
       c.appendChild(liveCard());
     }
     if (a.n) {
-      var s = S.sampleSize(state.settings.populasi);
-      c.appendChild(el('section', { class: 'kpis', 'aria-label': 'Ringkasan' , html:
-        '<div class="kpi"><div class="eyebrow">IKM Unit Layanan</div><div class="k-val">' + f2(a.ikm) + '</div><div class="k-sub">Mutu ' + mutuChip(a.mutu) + ' ' + esc(S.MUTU_LABEL[a.mutu] || '') + ' · nilai ' + S.fmt(a.ikm4, 3) + ' (skala 4)</div></div>' +
-        '<div class="kpi"><div class="eyebrow">Responden</div><div class="k-val">' + a.n + '</div><div class="k-sub">' + (s.s ? 'Sampel minimal ' + Math.ceil(s.s) + (a.n >= Math.ceil(s.s) ? ' · terpenuhi' : ' · belum terpenuhi') : 'Isi populasi untuk cek sampel') + '</div></div>' +
-        '<div class="kpi"><div class="eyebrow">Validasi jawaban</div><div class="k-val">' + (a.n - a.invalid) + '<span style="font-size:15px;color:var(--muted)">/' + a.n + '</span></div><div class="k-sub">' + (a.invalid ? '<span class="pill bad">' + a.invalid + ' baris perlu dicek</span>' : '<span class="pill ok">Semua jawaban terbaca</span>') + '</div></div>' }));
+      var s = S.sampleSize(state.settings.populasi), smin = s.s ? Math.ceil(s.s) : 0;
+      var LAY = A.perLayanan.filter(function (b) { return b.inList || b.n > 0; });
+      var active = LAY.filter(function (b) { return b.n > 0; }).sort(function (x, y) { return y.ikm - x.ikm; });
+      var rk = S.rankUnsur(a.unsurK), best = active[0], lowU = rk[rk.length - 1];
+      var pv = prevInfo(), delta = pv.ikm !== '' && pv.ikm != null ? a.ikm - Number(pv.ikm) : null;
+      var pvL = 'TW ' + S.ROMAWI[pv.tw] + (pv.tahun !== state.settings.tahun ? ' ' + pv.tahun : '');
+      var dTxt = delta == null ? '' : (Math.abs(delta) < 0.005 ? '<span class="delta">= sama dengan ' + pvL + '</span>' : '<span class="delta ' + (delta > 0 ? 'up' : 'down') + '">' + (delta > 0 ? '▲ naik ' : '▼ turun ') + Math.abs(delta).toFixed(2) + ' dari ' + pvL + '</span>');
+
+      // 1. Panel utama IKM
+      var hero = el('section', { class: 'hero fx', 'aria-label': 'Ringkasan IKM', html:
+        '<div class="hero-main">' +
+          '<div class="hero-eye">IKM Unit Layanan · ' + esc(per) + '</div>' +
+          '<div class="hero-val tnum"><span data-count="' + a.ikm.toFixed(2) + '" data-dec="2">' + f2(a.ikm) + '</span></div>' +
+          '<div class="hero-badges"><span class="mutu-big">' + (a.mutu || '–') + '</span><span class="hero-ml">' + esc(S.MUTU_LABEL[a.mutu] || '') + '</span>' + dTxt + '</div>' +
+          '<div class="hero-sub">Nilai ' + S.fmt(a.ikm4, 3) + ' pada skala 4 · ' + a.n + ' responden · ' + active.length + ' jenis layanan disurvei</div>' +
+        '</div>' +
+        '<div class="hero-gauge">' + gaugeSVG(a.ikm) + '</div>' +
+        '<div class="hero-stats">' +
+          '<div class="hs"><span class="hs-l">Responden</span><b class="tnum"><span data-count="' + a.n + '">' + a.n + '</span></b><span class="hs-s">' + (smin ? (a.n >= smin ? '✓ sampel minimal ' + smin + ' terpenuhi' : 'kurang ' + (smin - a.n) + ' dari minimal ' + smin) : (a.invalid ? a.invalid + ' baris perlu dicek' : 'semua jawaban terbaca')) + '</span>' +
+            (smin ? '<span class="hs-bar"><i style="width:' + Math.min(100, a.n / smin * 100).toFixed(1) + '%"></i></span>' : '') + '</div>' +
+          (best ? '<div class="hs"><span class="hs-l">Layanan tertinggi</span><b class="tnum">' + f2(best.ikm) + '</b><span class="hs-s">' + esc(best.name.replace('Layanan ', '')) + '</span></div>' : '') +
+          '<div class="hs"><span class="hs-l">Unsur terendah</span><b class="tnum">' + f2(lowU.v) + '</b><span class="hs-s">' + esc(lowU.k + ' ' + lowU.name) + '</span></div>' +
+        '</div>' });
+      c.appendChild(hero); countUp(hero);
 
       c.appendChild(liveCard());
 
-      // Unsur
-      var g = el('div', { class: 'grid2' });
-      var cu = el('div', { class: 'card' }, [el('div', { class: 'card-h', html: '<h2>Nilai per Unsur Pelayanan</h2><span class="pill">konversi 25–100</span>' })]);
-      var box = el('div', { class: 'chart-box tall' }); cu.appendChild(box); g.appendChild(cu);
-      var rk = S.rankUnsur(a.unsurK);
-      var rows = '';
-      for (var i = 0; i < 16; i++) {
-        var ui = S.ITEM_UNSUR[i], u = S.UNSUR[ui], first = u.items[0] === i;
-        rows += '<tr>' + '<td class="tnum">P' + (i + 1) + '</td>' +
-          (first ? '<td rowspan="' + u.items.length + '">(' + u.k + ') ' + esc(u.short) + '</td><td rowspan="' + u.items.length + '" class="n">' + f2(a.unsurK[ui]) + '</td><td rowspan="' + u.items.length + '" class="n">' + S.fmt(a.unsur[ui], 3) + '</td><td rowspan="' + u.items.length + '" class="c">' + mutuChip(a.kategori[ui]) + '</td>' : '') +
-          '<td class="n">' + f2(a.avg[i] == null ? null : a.avg[i] * 25) + '</td><td class="n">' + S.fmt(a.avg[i], 3) + '</td></tr>';
-      }
-      g.appendChild(el('div', { class: 'card' }, [el('div', { class: 'card-h', html: '<h2>Rincian Hasil</h2><span class="spacer"></span><span class="pill ok">Tertinggi: ' + esc(rk[0].short) + ' ' + f2(rk[0].v) + '</span><span class="pill bad">Terendah: ' + esc(rk[rk.length - 1].short) + ' ' + f2(rk[rk.length - 1].v) + '</span>' }),
-        el('div', { class: 'tw', html: '<table class="t compact"><thead><tr><th>Item</th><th>Unsur</th><th class="n">Nilai Konversi</th><th class="n">Nilai</th><th class="c">Kategori</th><th class="n">Item Konversi</th><th class="n">Nilai Item</th></tr></thead><tbody>' + rows + '</tbody></table>' })]));
-      c.appendChild(g);
-      mountChart(box, chartUnsurCfg(A));
+      // 2. Kartu capaian per jenis layanan
+      var lg = el('div', { class: 'lay-grid', style: '--n:' + Math.max(1, LAY.length) });
+      LAY.forEach(function (b) {
+        var pos = active.indexOf(b), lr = b.n ? S.rankUnsur(b.unsurK) : [];
+        lg.appendChild(el('article', { class: 'lay-card fx' + (b.n ? '' : ' empty-l') + (pos === 0 && active.length > 1 ? ' top' : ''), html:
+          '<div class="lc-top"><span class="lc-rank">' + (b.n ? '#' + (pos + 1) : '—') + '</span>' + (b.n ? mutuChip(b.mutu) : '<span class="pill">belum ada</span>') + '</div>' +
+          '<h3>' + esc(b.name.replace(/^Layanan /, '')) + '</h3>' +
+          (b.n ? '<div class="lc-val tnum"><span data-count="' + b.ikm.toFixed(2) + '" data-dec="2">' + f2(b.ikm) + '</span></div>' +
+            '<div class="lc-meta"><span>' + b.n + ' responden</span><span>' + S.pct(a.n ? b.n / a.n : 0, 1) + '</span></div><div class="lc-share"><i style="width:' + (a.n ? b.n / a.n * 100 : 0).toFixed(1) + '%"></i></div>' +
+            sparkSVG(b.unsurK, 180, 42) +
+            '<div class="lc-foot"><span>▲ ' + esc(lr[0].short) + ' ' + f2(lr[0].v) + '</span><span class="lo">▼ ' + esc(lr[lr.length - 1].short) + ' ' + f2(lr[lr.length - 1].v) + '</span></div>'
+            : '<div class="lc-none">Belum ada responden pada triwulan ini.</div>') }));
+      });
+      var layCard = el('section', { class: 'sec-block' }, [el('div', { class: 'sb-h', html: '<h2>Capaian per Jenis Layanan</h2><span class="hint">IKM konversi · batang kecil = nilai U1–U9, kuning = unsur terendah</span>' }), lg]);
+      c.appendChild(layCard); countUp(lg);
 
+      // 3. Grafik unsur + kekuatan & prioritas
+      var g = el('div', { class: 'grid-21' });
+      var cu = el('div', { class: 'card fx' }, [el('div', { class: 'card-h', html: '<h2>Nilai per Unsur Pelayanan</h2><span class="pill">konversi 25–100</span><span class="spacer"></span><span class="lgd"><i class="t"></i>unsur lain <i class="a"></i>3 terendah <i class="ln"></i>batas mutu A (88,31)</span>' })]);
+      var box = el('div', { class: 'chart-box tall' }); cu.appendChild(box); g.appendChild(cu);
+      var bar = function (v) { return Math.max(4, Math.min(100, (v - 80) / 20 * 100)).toFixed(1); };
+      var ksItem = function (x, i, cls) { return '<li class="' + cls + '"><span class="ks-r">' + i + '</span><div class="ks-b"><div class="ks-n"><span>' + esc(x.name) + '</span><b class="tnum">' + f2(x.v) + '</b></div><span class="ks-t"><i style="width:' + bar(x.v) + '%"></i></span></div></li>'; };
+      g.appendChild(el('div', { class: 'card fx ks', html: '<div class="card-h"><h2>Kekuatan &amp; Prioritas</h2></div>' +
+        '<div class="ks-h up">Kekuatan · 3 unsur tertinggi</div><ol class="ks-l">' + rk.slice(0, 3).map(function (x, i) { return ksItem(x, i + 1, 'up'); }).join('') + '</ol>' +
+        '<div class="ks-h dn">Prioritas perbaikan · 3 unsur terendah</div><ol class="ks-l">' + rk.slice(-3).reverse().map(function (x, i) { return ksItem(x, rk.length - i, 'dn'); }).join('') + '</ol>' +
+        '<p class="hint" style="margin:10px 0 0">Skala batang 80–100. Semua unsur ' + (rk.every(function (x) { return x.v >= 88.31; }) ? 'berada di mutu A (≥ 88,31).' : 'belum seluruhnya mencapai mutu A.') + '</p>' }));
+      c.appendChild(g);
+      mountChart(box, dashUnsurCfg(A));
+
+      // 4. Tabel nilai per jenis layanan (P1–P16 & U1–U9)
       // Per jenis layanan
       var lay = A.perLayanan.filter(function (b) { return b.inList || b.n > 0; });
       var cl = el('div', { class: 'card' });
-      var head = el('div', { class: 'card-h' }, [el('h2', { text: 'Nilai per Jenis Layanan' }), el('span', { class: 'spacer' }),
+      var head = el('div', { class: 'card-h' }, [el('h2', { text: 'Tabel Nilai per Jenis Layanan' }), el('span', { class: 'spacer' }),
         el('div', { class: 'tabs', style: 'border:0' }, [['konv', 'Konversi'], ['avg', 'Rata-rata (skala 4)']].map(function (m) {
           return el('button', { 'aria-selected': dashMode === m[0] ? 'true' : 'false', text: m[1], onclick: function () { dashMode = m[0]; render(); } });
         })), el('button', { class: 'btn sm', html: ic('dl') + 'Unduh Excel', title: 'Tabel P1–P16 dan U1–U9, nilai konversi dan skala 4, desimal memakai koma', onclick: exportNilaiLayananXlsx })]);
@@ -1838,34 +2036,19 @@ window.OLAH_GAS = "/**\n * OlahSKM \u2014 Rekap Responden Masuk (Google Apps Scr
       cl.appendChild(el('div', { class: 'tw', html: '<table class="t compact"><thead>' + thP + '</thead><tbody>' + tbP + '</tbody></table>' }));
       cl.appendChild(el('h3', { class: 'subhead', style: 'border-top:0;margin:18px 0 8px;padding:0', text: 'Nilai per Unsur (U1–U9)' }));
       cl.appendChild(el('div', { class: 'tw', html: '<table class="t compact"><thead>' + thU + '</thead><tbody>' + tbU + '</tbody></table>' }));
-      var bx2 = el('div', { class: 'chart-box', style: 'height:220px;margin-top:16px' }); cl.appendChild(bx2);
       c.appendChild(cl);
-      var lw = lay.filter(function (b) { return b.n > 0; });
-      mountChart(bx2, { type: 'bar', data: { labels: lw.map(function (b) { return b.name.replace('Layanan ', ''); }), datasets: [{ data: lw.map(function (b) { return b.ikm == null ? null : +b.ikm.toFixed(2); }), backgroundColor: cssVar('--accent-2'), borderRadius: 4, maxBarThickness: 28 }] },
-        options: { indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { min: niceMin(lw.map(function (b) { return b.ikm; })), max: 100, grid: { color: cssVar('--line2') }, ticks: { color: cssVar('--muted') } }, y: { grid: { display: false }, ticks: { color: cssVar('--ink') } } } } });
 
-      // Profil responden (pivot)
-      var pv = el('div', { class: 'grid3' });
-      [['Jenis Layanan', A.pivots.layanan], ['Jenis Kelamin', A.pivots.jk], ['Pendidikan', A.pivots.pendidikan], ['Pekerjaan', A.pivots.pekerjaan], ['Usia', A.pivots.usia], ['Disabilitas / Non Disabilitas', A.pivots.disab], ['Jenis Disabilitas', A.pivots.jenisDisab]].forEach(function (p) {
-        var max = Math.max.apply(null, p[1].rows.map(function (r) { return r.n; }).concat([1]));
-        var body = p[1].rows.map(function (r) { return '<tr class="pv-row"><td>' + esc(r.label) + '</td><td class="n">' + r.n + '</td><td class="n">' + S.pct(r.pct) + '</td><td><div class="bar"><i style="width:' + (r.n / max * 100).toFixed(1) + '%"></i></div></td></tr>'; }).join('') ||
-          '<tr><td colspan="4" style="color:var(--muted)">Tidak ada data</td></tr>';
-        pv.appendChild(el('div', { class: 'card' }, [el('div', { class: 'card-h', html: '<h2>' + esc(p[0]) + '</h2>' }),
-          el('div', { class: 'tw', html: '<table class="t compact"><thead><tr><th>Label</th><th class="n">Jumlah</th><th class="n">%</th><th></th></tr></thead><tbody>' + body + '<tr class="tot"><td>Grand Total</td><td class="n">' + p[1].total + '</td><td class="n">' + (p[1].total ? '100.00%' : '–') + '</td><td></td></tr></tbody></table>' })]));
-      });
-      c.appendChild(el('div', {}, [el('h2', { class: 'sec-h', html: 'Profil Responden <small>pivot dari kolom G, H, I, J, K, L, M</small>', style: 'margin-bottom:12px' }), pv]));
-
-      // Kelompok rentan
-      var ren = A.rentan;
-      var rhtml = ren.length ? '<table class="t compact"><thead><tr><th>Kategori</th><th class="n">Resp.</th>' + S.QUESTIONS.map(function (q, i) { return '<th class="n">P' + (i + 1) + '</th>'; }).join('') + S.UNSUR.map(function (u) { return '<th class="n">' + u.k + '</th>'; }).join('') + '<th class="n">IKM</th></tr></thead><tbody>' +
-        ren.concat([Object.assign({}, A.rentanAll, { name: 'Seluruh kelompok rentan' })]).map(function (b, k) {
-          return '<tr' + (k === ren.length ? ' class="tot"' : '') + '><td>' + esc(b.name) + '</td><td class="n">' + b.n + '</td>' + b.avg.map(function (v) { return '<td class="n">' + S.fmt(v, 2) + '</td>'; }).join('') + b.unsur.map(function (v) { return '<td class="n">' + S.fmt(v, 2) + '</td>'; }).join('') + '<td class="n"><b>' + f2(b.ikm) + '</b></td></tr>';
-        }).join('') + '</tbody></table>' : '<div class="callout">Tidak ada responden penyandang/pendamping disabilitas pada data ini.</div>';
-      c.appendChild(el('div', { class: 'card' }, [el('div', { class: 'card-h', html: '<h2>Kepuasan Kelompok Rentan per Kategori</h2><span class="pill">rata-rata skala 4, IKM konversi</span>' }), el('div', { class: ren.length ? 'tw' : '', html: rhtml })]));
-    }
-
-    // Sampel + Tren
-    var g2 = el('div', { class: 'grid2' });
+      // 5. Rincian per item + tren & sampel
+      var rk = S.rankUnsur(a.unsurK);
+      var rows = '';
+      for (var i = 0; i < 16; i++) {
+        var ui = S.ITEM_UNSUR[i], u = S.UNSUR[ui], first = u.items[0] === i;
+        rows += '<tr>' + '<td class="tnum">P' + (i + 1) + '</td>' +
+          (first ? '<td rowspan="' + u.items.length + '">(' + u.k + ') ' + esc(u.short) + '</td><td rowspan="' + u.items.length + '" class="n">' + f2(a.unsurK[ui]) + '</td><td rowspan="' + u.items.length + '" class="n">' + S.fmt(a.unsur[ui], 3) + '</td><td rowspan="' + u.items.length + '" class="c">' + mutuChip(a.kategori[ui]) + '</td>' : '') +
+          '<td class="n">' + f2(a.avg[i] == null ? null : a.avg[i] * 25) + '</td><td class="n">' + S.fmt(a.avg[i], 3) + '</td></tr>';
+      }
+      var rincianCard = (el('div', { class: 'card' }, [el('div', { class: 'card-h', html: '<h2>Rincian Hasil per Item</h2><span class="spacer"></span><span class="pill ok">Tertinggi: ' + esc(rk[0].short) + ' ' + f2(rk[0].v) + '</span><span class="pill bad">Terendah: ' + esc(rk[rk.length - 1].short) + ' ' + f2(rk[rk.length - 1].v) + '</span>' }),
+        el('div', { class: 'tw', html: '<table class="t compact"><thead><tr><th>Item</th><th>Unsur</th><th class="n">Nilai Konversi</th><th class="n">Nilai</th><th class="c">Kategori</th><th class="n">Item Konversi</th><th class="n">Nilai Item</th></tr></thead><tbody>' + rows + '</tbody></table>' })]));
     var popIn = el('input', { type: 'number', id: 'inPop', min: 0, class: 'inp', value: state.settings.populasi, placeholder: 'contoh: 250' });
     var sOut = el('div');
     function upd() {
@@ -1875,21 +2058,70 @@ window.OLAH_GAS = "/**\n * OlahSKM \u2014 Rekap Responden Masuk (Google Apps Scr
     }
     popIn.addEventListener('input', function () { state.settings.populasi = popIn.value; upd(); changed('text'); });
     upd();
-    g2.appendChild(el('div', { class: 'card' }, [el('div', { class: 'card-h', html: '<h2>Rumus Perhitungan Sampel</h2><span class="pill">Krejcie &amp; Morgan</span>' }),
+    var sampelCard = (el('div', { class: 'card' }, [el('div', { class: 'card-h', html: '<h2>Rumus Perhitungan Sampel</h2><span class="pill">Krejcie &amp; Morgan</span>' }),
       el('div', { class: 'fld' }, [el('label', { for: 'inPop', html: 'Jumlah populasi (N) <span class="hint">penerima layanan dalam satu triwulan</span>' }), popIn]), sOut]));
 
-    var ct = el('div', { class: 'card' }, [el('div', { class: 'card-h', html: '<h2>Tren Nilai SKM ' + state.settings.tahun + '</h2><span class="pill">IKM konversi per triwulan</span>' })]);
-    var bx3 = el('div', { class: 'chart-box', style: 'height:230px' }); ct.appendChild(bx3);
-    g2.appendChild(ct); c.appendChild(g2);
-    mountChart(bx3, chartTrenCfg(trenSeries(state.settings.tahun)));
 
-    c.appendChild(rekapEditor());
+      var g5 = el('div', { class: 'grid2' });
+      var ct = el('div', { class: 'card fx' }, [el('div', { class: 'card-h', html: '<h2>Tren Nilai SKM ' + state.settings.tahun + '</h2><span class="pill">IKM konversi per triwulan</span>' + (delta == null ? '' : '<span class="spacer"></span>' + dTxt.replace('class="delta', 'class="delta lt')) })]);
+      var bx3 = el('div', { class: 'chart-box', style: 'height:250px' }); ct.appendChild(bx3);
+      g5.appendChild(el('div', { class: 'stack' }, [ct, sampelCard]));
+      g5.appendChild(rincianCard);
+      c.appendChild(g5);
+      mountChart(bx3, dashTrenCfg(trenSeries(state.settings.tahun)));
 
-    if (a.n) {
-      var sar = A.saran;
-      c.appendChild(el('div', { class: 'card' }, [el('div', { class: 'card-h', html: '<h2>Saran dan Masukan Responden</h2><span class="pill">' + sar.length + ' isian</span>' }),
-        el('div', { class: 'saran-list', html: sar.map(function (x) { return '<div><span>' + esc(x.text) + '<small>' + esc(x.nama || 'Tanpa nama') + ' · ' + esc(x.layanan) + '</small></span></div>'; }).join('') || '<div class="hint">Belum ada saran tertulis.</div>' })]));
+      // 6. Profil responden
+      var P = A.pivots;
+      var dc = function (t, pvt, extra) { return el('div', { class: 'card fx prof', html: '<div class="card-h"><h2>' + esc(t) + '</h2></div><div class="dn-wrap">' + donutSVG(pvt.rows, pvt.total, t) + legendHTML(pvt.rows) + '</div>' + (extra || '') }); };
+      var disExtra = P.jenisDisab.rows.length ? '<div class="sub-l"><span class="hint">Jenis disabilitas</span>' + barsHTML(P.jenisDisab.rows) + '</div>' : '';
+      var pg = el('div', { class: 'grid3' }, [dc('Jenis Kelamin', P.jk), dc('Pendidikan', P.pendidikan), dc('Disabilitas', P.disab, disExtra)]);
+      var pg2 = el('div', { class: 'grid2' }, [
+        el('div', { class: 'card fx', html: '<div class="card-h"><h2>Pekerjaan</h2></div>' + barsHTML(P.pekerjaan.rows) }),
+        el('div', { class: 'card fx', html: '<div class="card-h"><h2>Usia</h2></div>' + barsHTML(P.usia.rows) })]);
+      c.appendChild(el('section', { class: 'sec-block' }, [el('div', { class: 'sb-h', html: '<h2>Profil Responden</h2><span class="hint">' + a.n + ' responden · dari kolom G, H, I, J, K, L</span>' }), pg, pg2]));
+
+      // Kelompok rentan
+      var ren = A.rentan;
+      var rhtml = ren.length ? '<table class="t compact"><thead><tr><th>Kategori</th><th class="n">Resp.</th>' + S.QUESTIONS.map(function (q, i) { return '<th class="n">P' + (i + 1) + '</th>'; }).join('') + S.UNSUR.map(function (u) { return '<th class="n">' + u.k + '</th>'; }).join('') + '<th class="n">IKM</th></tr></thead><tbody>' +
+        ren.concat([Object.assign({}, A.rentanAll, { name: 'Seluruh kelompok rentan' })]).map(function (b, k) {
+          return '<tr' + (k === ren.length ? ' class="tot"' : '') + '><td>' + esc(b.name) + '</td><td class="n">' + b.n + '</td>' + b.avg.map(function (v) { return '<td class="n">' + S.fmt(v, 2) + '</td>'; }).join('') + b.unsur.map(function (v) { return '<td class="n">' + S.fmt(v, 2) + '</td>'; }).join('') + '<td class="n"><b>' + f2(b.ikm) + '</b></td></tr>';
+        }).join('') + '</tbody></table>' : '<div class="callout">Tidak ada responden penyandang/pendamping disabilitas pada data ini.</div>';
+      c.appendChild(el('div', { class: 'card' }, [el('div', { class: 'card-h', html: '<h2>Kepuasan Kelompok Rentan per Kategori</h2><span class="pill">rata-rata skala 4, IKM konversi</span>' }), el('div', { class: ren.length ? 'tw' : '', html: rhtml })]));
+
+      // 8. Suara responden
+      var sar = A.saran, showAll = false;
+      var qWrap = el('div', { class: 'quote-grid' });
+      var qBtn = el('button', { class: 'btn sm', text: 'Tampilkan semua', onclick: function () { showAll = !showAll; drawQ(); } });
+      function drawQ() {
+        var list = showAll ? sar : sar.slice(0, 6);
+        qWrap.innerHTML = list.map(function (x) { return '<figure class="quote"><blockquote>' + esc(x.text) + '</blockquote><figcaption><span class="q-tag">' + esc(x.layanan.replace(/^Layanan /, '')) + '</span>' + esc(x.nama || 'Tanpa nama') + '</figcaption></figure>'; }).join('') || '<div class="hint">Belum ada saran tertulis.</div>';
+        qBtn.hidden = sar.length <= 6; qBtn.textContent = showAll ? 'Tampilkan lebih sedikit' : 'Tampilkan semua (' + sar.length + ')';
+      }
+      drawQ();
+      c.appendChild(el('section', { class: 'sec-block' }, [el('div', { class: 'sb-h' }, [el('h2', { text: 'Suara Responden' }), el('span', { class: 'hint', text: sar.length + ' saran dan masukan' }), el('span', { class: 'spacer' }), qBtn]), qWrap]));
+    } else {
+      // Tanpa data: tetap tampilkan sampel & tren
+      var g0 = el('div', { class: 'grid2' });
+      var a0 = a;
+    var popIn = el('input', { type: 'number', id: 'inPop', min: 0, class: 'inp', value: state.settings.populasi, placeholder: 'contoh: 250' });
+    var sOut = el('div');
+    function upd() {
+      var s = S.sampleSize(popIn.value);
+      sOut.innerHTML = s.s ? '<table class="t compact" style="margin-top:10px"><tbody><tr><td>Pembilang (3,841 × N × 0,25)</td><td class="n">' + S.fmt(s.num, 4) + '</td></tr><tr><td>Penyebut (0,0025 × (N−1) + 0,96025)</td><td class="n">' + S.fmt(s.den, 5) + '</td></tr><tr class="tot"><td>Sampel minimal</td><td class="n">' + S.fmt(s.s, 2) + ' → ' + Math.ceil(s.s) + ' orang</td></tr></tbody></table>' +
+        (a0.n ? '<p style="margin:10px 0 0">' + (a0.n >= Math.ceil(s.s) ? '<span class="pill ok">Terpenuhi</span> ' : '<span class="pill warn">Kurang ' + (Math.ceil(s.s) - a0.n) + ' responden</span> ') + 'Responden saat ini ' + a0.n + ' orang.</p>' : '') : '<p class="hint" style="margin:10px 0 0">Isi jumlah populasi penerima layanan untuk menghitung sampel minimal.</p>';
     }
+    popIn.addEventListener('input', function () { state.settings.populasi = popIn.value; upd(); changed('text'); });
+    upd();
+    var sampelCard = (el('div', { class: 'card' }, [el('div', { class: 'card-h', html: '<h2>Rumus Perhitungan Sampel</h2><span class="pill">Krejcie &amp; Morgan</span>' }),
+      el('div', { class: 'fld' }, [el('label', { for: 'inPop', html: 'Jumlah populasi (N) <span class="hint">penerima layanan dalam satu triwulan</span>' }), popIn]), sOut]));
+
+
+      var ct0 = el('div', { class: 'card' }, [el('div', { class: 'card-h', html: '<h2>Tren Nilai SKM ' + state.settings.tahun + '</h2><span class="pill">IKM konversi per triwulan</span>' })]);
+      var bx0 = el('div', { class: 'chart-box', style: 'height:230px' }); ct0.appendChild(bx0);
+      g0.appendChild(sampelCard); g0.appendChild(ct0); c.appendChild(g0);
+      mountChart(bx0, dashTrenCfg(trenSeries(state.settings.tahun)));
+    }
+    c.appendChild(rekapEditor());
   }
   function rekapEditor() {
     var card = el('div', { class: 'card' }, [el('div', { class: 'card-h', html: '<h2>Rekap Nilai Unsur per Triwulan</h2><span class="hint">Sheet "REKAP PER TW". Nilai unsur skala 4, IKM konversi. Periode berjalan terisi otomatis dari data.</span>' })]);
