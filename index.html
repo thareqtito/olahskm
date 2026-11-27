@@ -2315,7 +2315,12 @@ window.OLAH_GAS = "/**\n * OlahSKM \u2014 Rekap Responden Masuk (Google Apps Scr
     if (!A.all.n) { c.appendChild(el('div', { class: 'card' }, [el('div', { class: 'empty', html: '<h3>Belum ada data untuk diolah</h3><p>Isi menu File Responses terlebih dahulu.</p>' })])); return; }
     // Tabel utama: seluruh responden
     c.appendChild(el('div', { class: 'card' }, [
-      el('div', { class: 'card-h', html: '<h2>Pengolahan Data Hasil Survei Kepuasan Masyarakat</h2><span class="hint">Unit pelayanan: KPU Kabupaten Pacitan · seluruh jenis layanan</span><span class="spacer"></span>' + olahStatus(A.all) }),
+      (function () {
+        var hd = el('div', { class: 'card-h', html: '<h2>Pengolahan Data Hasil Survei Kepuasan Masyarakat</h2><span class="hint">Unit pelayanan: KPU Kabupaten Pacitan · seluruh jenis layanan</span><span class="spacer"></span>' + olahStatus(A.all) });
+        hd.appendChild(el('button', { class: 'btn sm', html: ic('dl') + 'Excel', title: 'Unduh tabel ini sebagai Excel (warna dan sel gabungan seperti di layar)', onclick: exportOlahMainXlsx }));
+        hd.appendChild(el('button', { class: 'btn sm', html: ic('dl') + 'PNG', title: 'Unduh tabel ini sebagai gambar PNG', onclick: function () { busy(true, 'Menyiapkan gambar…'); setTimeout(function () { try { saveCanvas(olahMainCanvas(analysis()), 'Pengolahan Data SKM TW ' + S.ROMAWI[state.settings.tw] + ' ' + state.settings.tahun, 'png'); } finally { busy(false); } }, 30); } }));
+        return hd;
+      })(),
       el('div', { class: 'xl-wrap xlm-wrap', html: olahTableHTML(A.recs, A.all) })
     ]));
     if (A.all.invalid) c.appendChild(el('div', { class: 'callout warn', html: 'Baris "Salah" berarti ada jawaban kosong atau tidak dikenali (ditandai merah). Perbaiki di menu File Responses; baris tersebut tetap ikut dihitung untuk pertanyaan yang terisi, sama seperti rumus AVERAGE di Excel.' }));
@@ -2417,6 +2422,10 @@ window.OLAH_GAS = "/**\n * OlahSKM \u2014 Rekap Responden Masuk (Google Apps Scr
       el('button', { class: 'btn ghost', id: 'btnUndo', html: ic('undo') + 'Urungkan', disabled: !G.undo.length, onclick: doUndo }),
       el('span', { class: 'spacer' }), search,
       el('button', { class: 'btn', html: ic('dl') + 'Unduh Excel', onclick: exportResponses }),
+      el('button', { class: 'btn', html: ic('img') + 'Unduh PNG', title: 'Unduh seluruh tabel jawaban sebagai gambar PNG', onclick: function () {
+        if (!state.rows.some(function (r) { return !S.isRowEmpty(r); })) return toast('Belum ada data untuk diunduh.');
+        busy(true, 'Menyiapkan gambar…'); setTimeout(function () { try { saveCanvas(responsesCanvas(), 'Form Responses SKM TW ' + S.ROMAWI[state.settings.tw] + ' ' + state.settings.tahun, 'png'); } finally { busy(false); } }, 30);
+      } }),
       clearBox
     ]);
     function clearBtn() {
@@ -2610,6 +2619,152 @@ window.OLAH_GAS = "/**\n * OlahSKM \u2014 Rekap Responden Masuk (Google Apps Scr
       changed(); busy(false); gridRender();
       toast(added + ' baris ditambahkan' + (dup ? ', ' + dup + ' duplikat dilewati' : '') + '.', 4500);
     }).catch(function (e) { busy(false); toast('Berkas tidak bisa dibaca: ' + e.message); });
+  }
+  /* ---------- Gambar tabel umum: kumpulan sel → latar, teks, garis (garis tunggal di koordinat bulat) ---------- */
+  function paintCells(x, W, H, cells, o) {
+    o = o || {};
+    x.fillStyle = '#fff'; x.fillRect(0, 0, W, H);
+    cells.forEach(function (c) { x.fillStyle = c.fill || '#fff'; x.fillRect(c.x, c.y, c.w, c.h); });
+    x.textBaseline = 'middle';
+    cells.forEach(function (c) {
+      var t = c.t == null ? '' : String(c.t); if (!t) return;
+      var fs = c.size || o.size || 13, wt = c.bold ? 'bold ' : '', room = c.w - 10;
+      x.font = wt + fs + 'px Arial';
+      if (c.wrap && x.measureText(t).width > room && RG_SPLIT[t]) { // dua baris, mis. "Kompe-/tensi"
+        var pr = RG_SPLIT[t]; while (fs > 9 && Math.max(x.measureText(pr[0]).width, x.measureText(pr[1]).width) > room) { fs -= 0.5; x.font = wt + fs + 'px Arial'; }
+        x.fillStyle = c.color || '#000'; x.textAlign = 'center';
+        x.fillText(pr[0], c.x + c.w / 2, c.y + c.h / 2 - fs * 0.55 + 1); x.fillText(pr[1], c.x + c.w / 2, c.y + c.h / 2 + fs * 0.55 + 1);
+        return;
+      }
+      if (c.fit) { while (fs > 9 && x.measureText(t).width > room) { fs -= 0.5; x.font = wt + fs + 'px Arial'; } }
+      if (x.measureText(t).width > room) { // potong dengan elipsis
+        var lo = 0, hi = t.length; while (lo < hi) { var mid = (lo + hi + 1) >> 1; if (x.measureText(t.slice(0, mid) + '…').width <= room) lo = mid; else hi = mid - 1; }
+        t = t.slice(0, lo) + '…';
+      }
+      x.fillStyle = c.color || '#000'; x.textAlign = c.left ? 'left' : 'center';
+      x.fillText(t, c.left ? c.x + 6 : c.x + c.w / 2, c.y + c.h / 2 + 1);
+    });
+    x.strokeStyle = o.line || '#3a3a3a'; x.lineWidth = 1;
+    cells.forEach(function (c) { x.strokeRect(c.x + 0.5, c.y + 0.5, c.w, c.h); });
+  }
+  function canvasScale(W, H, want) { return Math.max(0.5, Math.min(want || 2, 30000 / W, 30000 / H, Math.sqrt(2.4e8 / (W * H)))); }
+
+  /* ---------- PNG: File Responses ---------- */
+  function responsesCanvas() {
+    var rows = state.rows.filter(function (r) { return !S.isRowEmpty(r); });
+    var cols = [{ w: 44, t: 'No' }].concat(S.COLS.map(function (c, i) { return { w: c.q != null ? 104 : c.w, t: c.q != null ? 'P' + (c.q + 1) : c.label, q: c.q != null }; }));
+    var W = cols.reduce(function (a, c) { return a + c.w; }, 0) + 2, rh = 26, th = 34, hh = 32;
+    var maxRows = Math.floor((30000 - th - hh - 4) / rh);
+    if (rows.length > maxRows) { toast('Data terlalu banyak untuk satu gambar; hanya ' + maxRows + ' baris pertama yang disertakan.', 5000); rows = rows.slice(0, maxRows); }
+    var H = th + hh + rh * rows.length + 2;
+    var cells = [{ x: 0, y: 0, w: W - 1, h: th, t: 'FORM RESPONSES SURVEI KEPUASAN MASYARAKAT KPU KABUPATEN PACITAN — ' + perLabel(state.settings.tw, state.settings.tahun).toUpperCase() + ' · ' + rows.length + ' RESPONDEN', bold: true, size: 15, left: true }];
+    var cx = 0; cols.forEach(function (c) { cells.push({ x: cx, y: th, w: c.w, h: hh, t: c.t, bold: true, size: 12, fill: '#dce6f1', fit: true }); cx += c.w; });
+    rows.forEach(function (r, ri) {
+      var y = th + hh + ri * rh, x0 = 0, zebra = ri % 2 ? '#f7f9fc' : '#fff';
+      cols.forEach(function (c, ci) {
+        var v = ci === 0 ? ri + 1 : r[ci - 1], bad = c.q && cellBad(ci - 1, v);
+        cells.push({ x: x0, y: y, w: c.w, h: rh, t: v, size: 12.5, left: ci > 0 && !c.q, fill: bad ? '#ffc7ce' : zebra, color: bad ? '#9c0006' : '#000' });
+        x0 += c.w;
+      });
+    });
+    var sc = canvasScale(W, H, 1.5);
+    return hiCanvas(W, H, sc, function (x, w, h) { paintCells(x, w, h, cells, { line: '#9aa6b5' }); });
+  }
+
+  /* ---------- PNG & Excel: tabel utama Pengolahan Data ---------- */
+  var OM = { cw: [46, 210, 86, 112, 160, 112, 132], pw: 50, chk: 78, rh: 26, hr: [32, 40, 28] };
+  function olahMainCanvas(A) {
+    var recs = A.recs, b = A.all, cw = OM.cw, pw = OM.pw, rh = OM.rh;
+    var idW = cw.reduce(function (a, v) { return a + v; }, 0), X0 = idW, W = idW + pw * 16 + OM.chk + 2;
+    var th = 64, hH = OM.hr[0] + OM.hr[1] + OM.hr[2], H = th + hH + rh * recs.length + rh * 7 + 2;
+    var BL = '#dce6f1', YL = '#ffff4d', cells = [], dash = function (v, d) { return v == null || isNaN(v) ? '–' : S.fmt(v, d); };
+    cells.push({ x: 0, y: 0, w: W - 1, h: 34, t: 'PENGOLAHAN DATA HASIL SURVEI KEPUASAN MASYARAKAT', bold: true, size: 17, fill: '#fff' });
+    cells.push({ x: 0, y: 34, w: W - 1, h: 30, t: 'UNIT PELAYANAN : KPU KABUPATEN PACITAN · ' + perLabel(state.settings.tw, state.settings.tahun).toUpperCase(), bold: true, size: 13 });
+    var heads = ['No. Res', 'Jenis Layanan', 'Jenis Kelamin', 'Pendidikan', 'Pekerjaan', 'Disabilitas', 'Jenis Disabilitas'], x0 = 0, y = th;
+    heads.forEach(function (t, i) { cells.push({ x: x0, y: y, w: cw[i], h: hH, t: t, bold: true, size: 12.5, fit: true }); x0 += cw[i]; });
+    cells.push({ x: X0, y: y, w: pw * 16, h: OM.hr[0], t: 'NILAI UNSUR PELAYANAN', bold: true, size: 14 });
+    S.UNSUR.forEach(function (u) { cells.push({ x: X0 + u.items[0] * pw, y: y + OM.hr[0], w: u.items.length * pw, h: OM.hr[1], t: u.short, bold: true, size: 12, fill: BL, fit: true, wrap: true }); });
+    for (var i = 0; i < 16; i++) cells.push({ x: X0 + i * pw, y: y + OM.hr[0] + OM.hr[1], w: pw, h: OM.hr[2], t: 'P' + (i + 1), bold: true, size: 12.5, fill: BL });
+    cells.push({ x: X0 + pw * 16, y: y, w: OM.chk, h: hH, t: 'Checklist', bold: true, size: 12.5 });
+    y += hH;
+    recs.forEach(function (r) {
+      var vals = [r.no, r.layanan, r.jk, r.pendidikan, r.pekerjaan, r.disab, r.jenisDisab], xx = 0;
+      vals.forEach(function (v, k) { cells.push({ x: xx, y: y, w: cw[k], h: rh, t: v, size: 12.5, left: k > 0 }); xx += cw[k]; });
+      r.p.forEach(function (v, k) { var bad = !(typeof v === 'number' && v >= 1 && v <= 4); cells.push({ x: X0 + k * pw, y: y, w: pw, h: rh, t: v == null ? '' : (isNaN(v) ? '?' : v), size: 13, fill: bad ? '#ffc7ce' : '#fff', color: bad ? '#9c0006' : '#000', bold: bad }); });
+      cells.push({ x: X0 + pw * 16, y: y, w: OM.chk, h: rh, t: r.ok ? 'Benar' : 'Salah', size: 12.5, color: r.ok ? '#006100' : '#9c0006', bold: !r.ok });
+      y += rh;
+    });
+    function lbl(t, fill, bold) { cells.push({ x: 0, y: y, w: idW, h: rh, t: t, left: true, bold: bold, size: 13, fill: fill }); cells.push({ x: X0 + pw * 16, y: y, w: OM.chk, h: rh, t: '', fill: '#fff' }); }
+    lbl('Total Nilai Pertanyaan'); for (i = 0; i < 16; i++) cells.push({ x: X0 + i * pw, y: y, w: pw, h: rh, t: b.n ? b.total[i] : '–', size: 12.5 }); y += rh;
+    lbl('Nilai Rata-Rata Per Pertanyaan'); for (i = 0; i < 16; i++) cells.push({ x: X0 + i * pw, y: y, w: pw, h: rh, t: dash(b.avg[i], 2), size: 12.5 }); y += rh;
+    lbl('Nilai Per Unsur', BL, true); S.UNSUR.forEach(function (u, ui) { cells.push({ x: X0 + u.items[0] * pw, y: y, w: u.items.length * pw, h: rh, t: dash(b.unsur[ui], 2), bold: true, size: 13, fill: BL }); }); y += rh;
+    lbl('Kategori Per Unsur', BL, true); S.UNSUR.forEach(function (u, ui) { cells.push({ x: X0 + u.items[0] * pw, y: y, w: u.items.length * pw, h: rh, t: b.kategori[ui] || '–', bold: true, size: 13, fill: BL }); }); y += rh;
+    lbl('IKM OPP', YL, true); cells.push({ x: X0, y: y, w: pw * 16, h: rh, t: dash(b.ikm4, 4), bold: true, size: 14, fill: YL }); y += rh;
+    lbl('IKM Konversi OPP', null, true); cells.push({ x: X0, y: y, w: pw * 16, h: rh, t: dash(b.ikm, 2), bold: true, size: 14 }); y += rh;
+    lbl('Mutu Layanan', null, true); cells.push({ x: X0, y: y, w: pw * 16, h: rh, t: b.mutu || '–', bold: true, size: 14 });
+    var sc = canvasScale(W, H, 2);
+    return hiCanvas(W, H, sc, function (x, w, h) { paintCells(x, w, h, cells, { line: '#3a3a3a' }); });
+  }
+  function exportOlahMainXlsx() {
+    if (typeof ExcelJS === 'undefined') return toast('Pustaka Excel belum termuat. Periksa koneksi internet lalu muat ulang halaman.', 5000);
+    var A = analysis(), b = A.all, recs = A.recs;
+    busy(true, 'Menyusun berkas Excel…');
+    try {
+      var wb = new ExcelJS.Workbook(); wb.creator = 'OlahSKM KPU Kabupaten Pacitan';
+      var ws = wb.addWorksheet('Pengolahan Data', { pageSetup: { orientation: 'landscape', paperSize: 9, fitToPage: true, fitToWidth: 1, fitToHeight: 0 }, views: [{ state: 'frozen', xSplit: 7, ySplit: 6 }] });
+      var thin = { style: 'thin', color: { argb: 'FF000000' } }, BORDER = { top: thin, left: thin, bottom: thin, right: thin };
+      var F = function (hex) { return { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF' + hex } }; };
+      var NC2 = 7 + 16 + 1;
+      ws.columns = [6, 30, 13, 15, 22, 15, 18].map(function (w) { return { width: w }; }).concat(S.QUESTIONS.map(function () { return { width: 6 }; })).concat([{ width: 10 }]);
+      ws.mergeCells(1, 1, 1, NC2); ws.getCell(1, 1).value = 'PENGOLAHAN DATA HASIL SURVEI KEPUASAN MASYARAKAT'; ws.getCell(1, 1).font = { name: 'Arial', size: 13, bold: true }; ws.getCell(1, 1).alignment = { horizontal: 'center' };
+      ws.mergeCells(2, 1, 2, NC2); ws.getCell(2, 1).value = 'UNIT PELAYANAN : KPU KABUPATEN PACITAN — ' + perLabel(state.settings.tw, state.settings.tahun); ws.getCell(2, 1).font = { name: 'Arial', size: 11, bold: true }; ws.getCell(2, 1).alignment = { horizontal: 'center' };
+      var heads = ['No. Res', 'Jenis Layanan', 'Jenis Kelamin', 'Pendidikan', 'Pekerjaan', 'Disabilitas', 'Jenis Disabilitas'];
+      heads.forEach(function (t, i) { ws.mergeCells(4, i + 1, 6, i + 1); ws.getCell(4, i + 1).value = t; });
+      ws.mergeCells(4, 8, 4, 23); ws.getCell(4, 8).value = 'NILAI UNSUR PELAYANAN';
+      S.UNSUR.forEach(function (u) { var c1 = 8 + u.items[0], c2 = c1 + u.items.length - 1; if (c2 > c1) ws.mergeCells(5, c1, 5, c2); ws.getCell(5, c1).value = u.short; });
+      for (var i = 0; i < 16; i++) ws.getCell(6, 8 + i).value = 'P' + (i + 1);
+      ws.mergeCells(4, 24, 6, 24); ws.getCell(4, 24).value = 'Checklist';
+      for (var r = 4; r <= 6; r++) for (var c = 1; c <= NC2; c++) {
+        var cell = ws.getCell(r, c); cell.border = BORDER; cell.font = { name: 'Arial', size: 10, bold: true }; cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+        if ((r === 5 || r === 6) && c >= 8 && c <= 23) cell.fill = F('DCE6F1');
+      }
+      ws.getRow(5).height = 18;
+      var row = 7;
+      recs.forEach(function (rec) {
+        ws.getRow(row).values = [rec.no, rec.layanan, rec.jk, rec.pendidikan, rec.pekerjaan, rec.disab, rec.jenisDisab].concat(rec.p.map(function (v) { return v == null || isNaN(v) ? '' : v; })).concat([rec.ok ? 'Benar' : 'Salah']);
+        for (var c = 1; c <= NC2; c++) {
+          var cl = ws.getCell(row, c); cl.border = BORDER; cl.font = { name: 'Arial', size: 10 };
+          cl.alignment = { vertical: 'middle', horizontal: (c === 1 || c >= 8) ? 'center' : 'left' };
+          if (c >= 8 && c <= 23) { var v = rec.p[c - 8]; if (!(typeof v === 'number' && v >= 1 && v <= 4)) { cl.fill = F('FFC7CE'); cl.font = { name: 'Arial', size: 10, bold: true, color: { argb: 'FF9C0006' } }; } }
+          if (c === 24) cl.font = { name: 'Arial', size: 10, color: { argb: rec.ok ? 'FF006100' : 'FF9C0006' }, bold: !rec.ok };
+        }
+        row++;
+      });
+      var num = function (v, d) { return v == null || isNaN(v) ? '–' : +Number(v).toFixed(d); };
+      function foot(label, opt) {
+        ws.mergeCells(row, 1, row, 7); ws.getCell(row, 1).value = label;
+        opt.fill(row);
+        for (var c = 1; c <= NC2; c++) {
+          var cl = ws.getCell(row, c); cl.border = BORDER; cl.font = { name: 'Arial', size: 10, bold: !!opt.bold };
+          cl.alignment = { vertical: 'middle', horizontal: c === 1 ? 'left' : 'center' };
+          if (opt.bg && c <= 23) cl.fill = F(opt.bg);
+          if (opt.fmt && c >= 8 && c <= 23 && typeof cl.value === 'number') cl.numFmt = opt.fmt;
+        }
+        row++;
+      }
+      foot('Total Nilai Pertanyaan', { fill: function (r) { b.total.forEach(function (v, k) { ws.getCell(r, 8 + k).value = b.n ? v : '–'; }); } });
+      foot('Nilai Rata-Rata Per Pertanyaan', { fmt: '0.00', fill: function (r) { b.avg.forEach(function (v, k) { ws.getCell(r, 8 + k).value = num(v, 4); }); } });
+      foot('Nilai Per Unsur', { bold: true, bg: 'DCE6F1', fmt: '0.00', fill: function (r) { S.UNSUR.forEach(function (u, ui) { var c1 = 8 + u.items[0], c2 = c1 + u.items.length - 1; if (c2 > c1) ws.mergeCells(r, c1, r, c2); ws.getCell(r, c1).value = num(b.unsur[ui], 4); }); } });
+      foot('Kategori Per Unsur', { bold: true, bg: 'DCE6F1', fill: function (r) { S.UNSUR.forEach(function (u, ui) { var c1 = 8 + u.items[0], c2 = c1 + u.items.length - 1; if (c2 > c1) ws.mergeCells(r, c1, r, c2); ws.getCell(r, c1).value = b.kategori[ui] || '–'; }); } });
+      foot('IKM OPP', { bold: true, bg: 'FFFF4D', fmt: '0.0000', fill: function (r) { ws.mergeCells(r, 8, r, 23); ws.getCell(r, 8).value = num(b.ikm4, 4); } });
+      foot('IKM Konversi OPP', { bold: true, fmt: '0.00', fill: function (r) { ws.mergeCells(r, 8, r, 23); ws.getCell(r, 8).value = num(b.ikm, 2); } });
+      foot('Mutu Layanan', { bold: true, fill: function (r) { ws.mergeCells(r, 8, r, 23); ws.getCell(r, 8).value = b.mutu || '–'; } });
+      wb.xlsx.writeBuffer().then(function (buf) {
+        var name = 'Pengolahan Data SKM TW ' + S.ROMAWI[state.settings.tw] + ' ' + state.settings.tahun + ' - KPU Kab Pacitan.xlsx';
+        download(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), name);
+        busy(false); toast('Excel diunduh: ' + name, 4500);
+      }).catch(function (e) { busy(false); toast('Gagal membuat Excel: ' + e.message, 5000); });
+    } catch (e) { busy(false); console.error(e); toast('Gagal membuat Excel: ' + e.message, 5000); }
   }
   function exportResponses() {
     if (typeof XLSX === 'undefined') return toast('Pustaka Excel belum termuat.');
